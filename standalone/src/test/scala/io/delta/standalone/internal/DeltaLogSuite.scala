@@ -678,6 +678,12 @@ abstract class DeltaLogSuiteBase extends FunSuite {
       }
     }
   }
+
+  test("delta log v2") {
+    // scalastyle:off println
+    println("this test works")
+    // scalastyle:on println
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////

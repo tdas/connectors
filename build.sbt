@@ -450,6 +450,8 @@ lazy val standaloneWithoutParquetUtils = project
     Compile / packageBin := (standalone / assembly).value
   )
 
+
+val arrowVersion = "11.0.0"
 lazy val standalone = (project in file("standalone"))
   .enablePlugins(GenJavadocPlugin, JavaUnidocPlugin)
   .settings(
@@ -465,6 +467,10 @@ lazy val standalone = (project in file("standalone"))
         ExclusionRule("org.slf4j", "slf4j-api")
       ),
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.12.3",
+      "org.apache.arrow" % "arrow-compression" % arrowVersion,
+      "org.apache.arrow" % "arrow-format" % arrowVersion,
+      "org.apache.arrow" % "arrow-vector" % arrowVersion,
+      "org.apache.arrow" % "arrow-memory" % arrowVersion pomOnly(),
       "org.json4s" %% "json4s-jackson" % "3.7.0-M11" excludeAll (
         ExclusionRule("com.fasterxml.jackson.core"),
         ExclusionRule("com.fasterxml.jackson.module")
