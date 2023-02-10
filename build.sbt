@@ -45,6 +45,8 @@ val hiveDeltaVersion = "0.5.0"
 val parquet4sVersion = "1.9.4"
 val scalaTestVersion = "3.0.8"
 val deltaStorageVersion = "2.2.0"
+val arrowVersion = "10.0.0"
+val snappyVersion = "1.1.8.4"
 // Versions for Hive 3
 val hadoopVersion = "3.1.0"
 val hiveVersion = "3.1.2"
@@ -450,8 +452,6 @@ lazy val standaloneWithoutParquetUtils = project
     Compile / packageBin := (standalone / assembly).value
   )
 
-
-val arrowVersion = "11.0.0"
 lazy val standalone = (project in file("standalone"))
   .enablePlugins(GenJavadocPlugin, JavaUnidocPlugin)
   .settings(
@@ -467,16 +467,25 @@ lazy val standalone = (project in file("standalone"))
         ExclusionRule("org.slf4j", "slf4j-api")
       ),
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.12.3",
-      "org.apache.arrow" % "arrow-compression" % arrowVersion,
-      "org.apache.arrow" % "arrow-format" % arrowVersion,
-      "org.apache.arrow" % "arrow-vector" % arrowVersion,
-      "org.apache.arrow" % "arrow-memory" % arrowVersion pomOnly(),
       "org.json4s" %% "json4s-jackson" % "3.7.0-M11" excludeAll (
         ExclusionRule("com.fasterxml.jackson.core"),
         ExclusionRule("com.fasterxml.jackson.module")
       ),
       "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
       "io.delta" % "delta-storage" % deltaStorageVersion,
+      "org.apache.arrow" % "arrow-vector" % arrowVersion excludeAll (
+        ExclusionRule("com.fasterxml.jackson.core"),
+        ExclusionRule("com.fasterxml.jackson.module")
+      ),
+      "org.apache.arrow" % "arrow-memory" % arrowVersion excludeAll (
+        ExclusionRule("com.fasterxml.jackson.core"),
+        ExclusionRule("com.fasterxml.jackson.module")
+      ),
+      "org.apache.arrow" % "arrow-memory-unsafe" % arrowVersion excludeAll (
+        ExclusionRule("com.fasterxml.jackson.core"),
+        ExclusionRule("com.fasterxml.jackson.module")
+      ),
+      "org.xerial.snappy" % "snappy-java" % snappyVersion,
 
       // Compiler plugins
       // -- Bump up the genjavadoc version explicitly to 0.18 to work with Scala 2.12

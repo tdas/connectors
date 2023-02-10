@@ -219,7 +219,7 @@ private[internal] class SnapshotImpl(
     }
   }
 
-  private def files: Seq[Path] = {
+  def files: Seq[Path] = {
     val logPathURI = path.toUri
     val files = (logSegment.deltas ++ logSegment.checkpoints).map(_.getPath)
 
