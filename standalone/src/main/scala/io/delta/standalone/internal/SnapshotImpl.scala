@@ -17,7 +17,6 @@
 package io.delta.standalone.internal
 
 import java.net.URI
-import java.util.concurrent.{Executors, ExecutorService}
 
 import scala.collection.JavaConverters._
 import scala.collection.parallel.ExecutionContextTaskSupport
@@ -30,15 +29,14 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 
 import io.delta.standalone.{DeltaScan, Snapshot}
 import io.delta.standalone.actions.{AddFile => AddFileJ, Metadata => MetadataJ, Protocol => ProtocolJ, RemoveFile => RemoveFileJ, SetTransaction => SetTransactionJ}
-import io.delta.standalone.data.{CloseableIterator, RowRecord => RowParquetRecordJ}
+import io.delta.standalone.data.{CloseableIterator, RowRecord}
 import io.delta.standalone.expressions.Expression
 
-import io.delta.standalone.internal.actions.{AddFile, InMemoryLogReplay, MemoryOptimizedLogReplay, Metadata, Parquet4sSingleActionWrapper, Protocol, RemoveFile, SetTransaction, SingleAction}
-import io.delta.standalone.internal.data.CloseableParquetDataIterator
+import io.delta.standalone.internal.actions._
 import io.delta.standalone.internal.exception.DeltaErrors
 import io.delta.standalone.internal.logging.Logging
 import io.delta.standalone.internal.scan.{DeltaScanImpl, FilteredDeltaScanImpl}
-import io.delta.standalone.internal.util.{ConversionUtils, FileNames, JsonUtils}
+import io.delta.standalone.internal.util.{ConversionUtils, JsonUtils}
 
 /**
  * Scala implementation of Java interface [[Snapshot]].
@@ -65,10 +63,11 @@ private[internal] class SnapshotImpl(
   // Public API Methods
   ///////////////////////////////////////////////////////////////////////////
 
-  override def scan(): DeltaScan = new DeltaScanImpl(memoryOptimizedLogReplay)
+  override def scan(): DeltaScan = new DeltaScanImpl(this, memoryOptimizedLogReplay)
 
   override def scan(predicate: Expression): DeltaScan =
     new FilteredDeltaScanImpl(
+      this,
       memoryOptimizedLogReplay,
       predicate,
       metadataScala.partitionSchema,
@@ -80,16 +79,9 @@ private[internal] class SnapshotImpl(
 
   override def getVersion: Long = version
 
-  override def open(): CloseableIterator[RowParquetRecordJ] =
-    CloseableParquetDataIterator(
-      allFilesScala
-        .map { add =>
-          (FileNames.absolutePath(deltaLog.dataPath, add.path).toString, add.partitionValues)
-        },
-      getMetadata.getSchema,
-      // the time zone ID if it exists, else null
-      deltaLog.timezone,
-      hadoopConf)
+  override def open(): CloseableIterator[RowRecord] = {
+    scan().asInstanceOf[DeltaScanImpl].getRows()
+  }
 
   ///////////////////////////////////////////////////////////////////////////
   // Internal-Only Methods
@@ -101,10 +93,11 @@ private[internal] class SnapshotImpl(
    * actions, convert them to Java actions (as per the [[DeltaScan]] interface), and then
    * convert them back to Scala actions.
    */
-  def scanScala(): DeltaScanImpl = new DeltaScanImpl(memoryOptimizedLogReplay)
+  def scanScala(): DeltaScanImpl = new DeltaScanImpl(this, memoryOptimizedLogReplay)
 
   def scanScala(predicate: Expression): DeltaScanImpl =
     new FilteredDeltaScanImpl(
+      this,
       memoryOptimizedLogReplay,
       predicate,
       metadataScala.partitionSchema,
@@ -330,10 +323,11 @@ private class InitialSnapshotImpl(
 
   override lazy val metadataScala: Metadata = Metadata()
 
-  override def scan(): DeltaScan = new DeltaScanImpl(memoryOptimizedLogReplay)
+  override def scan(): DeltaScan = new DeltaScanImpl(this, memoryOptimizedLogReplay)
 
   override def scan(predicate: Expression): DeltaScan =
     new FilteredDeltaScanImpl(
+      this,
       memoryOptimizedLogReplay,
       predicate,
       metadataScala.partitionSchema,

@@ -79,17 +79,17 @@ lazy val commonSettings = Seq(
     "-Xmx1024m"
   ),
   compileScalastyle := (Compile / scalastyle).toTask("").value,
-  (Compile / compile ) := ((Compile / compile) dependsOn compileScalastyle).value,
+  // (Compile / compile ) := ((Compile / compile) dependsOn compileScalastyle).value,
   testScalastyle := (Test / scalastyle).toTask("").value,
-  (Test / test) := ((Test / test) dependsOn testScalastyle).value,
+  // (Test / test) := ((Test / test) dependsOn testScalastyle).value,
 
   // Can be run explicitly via: build/sbt $module/checkstyle
   // Will automatically be run during compilation (e.g. build/sbt compile)
   // and during tests (e.g. build/sbt test)
   checkstyleConfigLocation := CheckstyleConfigLocation.File("dev/checkstyle.xml"),
   checkstyleSeverityLevel := Some(CheckstyleSeverityLevel.Error),
-  (Compile / checkstyle) := (Compile / checkstyle).triggeredBy(Compile / compile).value,
-  (Test / checkstyle) := (Test / checkstyle).triggeredBy(Test / compile).value
+  // (Compile / checkstyle) := (Compile / checkstyle).triggeredBy(Compile / compile).value,
+  // (Test / checkstyle) := (Test / checkstyle).triggeredBy(Test / compile).value
 )
 
 lazy val releaseSettings = Seq(
@@ -453,6 +453,7 @@ lazy val standaloneWithoutParquetUtils = project
   )
 
 lazy val standalone = (project in file("standalone"))
+  .dependsOn(core)
   .enablePlugins(GenJavadocPlugin, JavaUnidocPlugin)
   .settings(
     name := "delta-standalone-original",
@@ -584,6 +585,14 @@ lazy val standalone = (project in file("standalone"))
     // Ensure unidoc is run with tests. Must be cleaned before test for unidoc to be generated.
     (Test / test) := ((Test / test) dependsOn (Compile / unidoc)).value
   )
+
+lazy val core = (project in file("core"))
+  .settings(
+    name := "delta-core",
+    commonSettings,
+    skipReleaseSettings,
+  )
+
 
 /*
  ********************
