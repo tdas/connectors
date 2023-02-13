@@ -25,6 +25,7 @@ import org.apache.hadoop.conf.Configuration
 import io.delta.standalone.expressions.Expression
 import io.delta.standalone.types.StructType
 
+import io.delta.standalone.internal.SnapshotImpl
 import io.delta.standalone.internal.actions.{AddFile, MemoryOptimizedLogReplay}
 import io.delta.standalone.internal.data.PartitionRowRecord
 import io.delta.standalone.internal.sources.StandaloneHadoopConf
@@ -37,10 +38,11 @@ import io.delta.standalone.internal.util.PartitionUtils
  * If the pushed predicate is empty, then all files are returned.
  */
 final private[internal] class FilteredDeltaScanImpl(
+    snapshot: SnapshotImpl,
     replay: MemoryOptimizedLogReplay,
     expr: Expression,
     partitionSchema: StructType,
-    hadoopConf: Configuration) extends DeltaScanImpl(replay) {
+    hadoopConf: Configuration) extends DeltaScanImpl(snapshot, replay) {
 
   private val partitionColumns = partitionSchema.getFieldNames.toSeq
   private val evaluationResults = mutable.Map.empty[Map[String, String], Boolean]

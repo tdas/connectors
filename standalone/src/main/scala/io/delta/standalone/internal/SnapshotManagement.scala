@@ -250,7 +250,7 @@ private[internal] trait SnapshotManagement { self: DeltaLogImpl =>
     // scalastyle:off println
     println("calling SnapshotImpl constructor")
     // scalastyle:on println
-    new SnapshotArrowImpl(
+    new SnapshotImpl(
       hadoopConf,
       logPath,
       segment.version,
