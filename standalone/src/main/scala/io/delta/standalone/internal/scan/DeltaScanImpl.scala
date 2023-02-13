@@ -19,20 +19,19 @@ package io.delta.standalone.internal.scan
 import java.net.URI
 import java.util.{NoSuchElementException, Optional}
 
-import io.delta.standalone.{DeltaScan, DeltaScanSplit}
+import io.delta.standalone.DeltaScan
 import io.delta.standalone.actions.{AddFile => AddFileJ}
-import io.delta.standalone.data.{CloseableIterator, RowRecord}
+import io.delta.standalone.data.CloseableIterator
 import io.delta.standalone.expressions.Expression
 
-import io.delta.standalone.internal.SnapshotImpl
+import io.delta.standalone.internal.SnapshotImpl.canonicalizePath
 import io.delta.standalone.internal.actions.{AddFile, MemoryOptimizedLogReplay, RemoveFile}
-import io.delta.standalone.internal.util.{ConversionUtils, FileNames}
+import io.delta.standalone.internal.util.ConversionUtils
 
 /**
  * Scala implementation of Java interface [[DeltaScan]].
  */
-private[internal] class DeltaScanImpl(snapshot: SnapshotImpl, replay: MemoryOptimizedLogReplay)
-  extends DeltaScan {
+private[internal] class DeltaScanImpl(replay: MemoryOptimizedLogReplay) extends DeltaScan {
 
   /**
    * Whether or not the given [[AddFile]] should be returned during iteration.
@@ -89,7 +88,7 @@ private[internal] class DeltaScanImpl(snapshot: SnapshotImpl, replay: MemoryOpti
           case add: AddFile =>
             val canonicalizeAdd = add.copy(
               dataChange = false,
-              path = SnapshotImpl.canonicalizePath(add.path, replay.hadoopConf))
+              path = canonicalizePath(add.path, replay.hadoopConf))
 
             val alreadyDeleted = tombstones.contains(canonicalizeAdd.pathAsUri)
             val alreadyReturned = addFiles.contains(canonicalizeAdd.pathAsUri)
@@ -110,7 +109,7 @@ private[internal] class DeltaScanImpl(snapshot: SnapshotImpl, replay: MemoryOpti
           case remove: RemoveFile if !isCheckpoint =>
             val canonicalizeRemove = remove.copy(
               dataChange = false,
-              path = SnapshotImpl.canonicalizePath(remove.path, replay.hadoopConf))
+              path = canonicalizePath(remove.path, replay.hadoopConf))
 
             tombstones += canonicalizeRemove.pathAsUri
           case _ => // do nothing
@@ -163,42 +162,6 @@ private[internal] class DeltaScanImpl(snapshot: SnapshotImpl, replay: MemoryOpti
 
     override def close(): Unit = {
       iter.close()
-    }
-  }
-
-  override def getSplits(): CloseableIterator[DeltaScanSplit] = {
-    new CloseableIterator[DeltaScanSplit] {
-      private val iter = getIterScala
-
-      override def hasNext: Boolean = iter.hasNext
-
-      override def next(): DeltaScanSplit = {
-        val addFile = iter.next()
-        new DeltaScanSplitImpl(
-          FileNames.absolutePath(snapshot.deltaLog.dataPath, addFile.path).toString,
-          addFile.partitionValues,
-          snapshot.getMetadata.getSchema,
-          snapshot.deltaLog.timezone,
-          snapshot.hadoopConf)
-      }
-
-      override def close(): Unit = iter.close()
-    }
-  }
-
-  private[internal] def getRows(): CloseableIterator[RowRecord] = {
-    new CloseableIterator[RowRecord] {
-      val splitIterator = getSplits()
-      var rowIterator: CloseableIterator[RowRecord] = null
-      override def hasNext: Boolean = {
-        while ((rowIterator == null || !rowIterator.hasNext) && splitIterator.hasNext) {
-          rowIterator = splitIterator.next().getDataAsRows
-        }
-        rowIterator != null && rowIterator.hasNext
-      }
-
-      override def next(): RowRecord = rowIterator.next
-      override def close(): Unit = {}
     }
   }
 }

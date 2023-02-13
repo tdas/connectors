@@ -247,9 +247,6 @@ private[internal] trait SnapshotManagement { self: DeltaLogImpl =>
   }
 
   private def createSnapshot(segment: LogSegment, lastCommitTimestamp: Long): SnapshotImpl = {
-    // scalastyle:off println
-    println("calling SnapshotImpl constructor")
-    // scalastyle:on println
     new SnapshotImpl(
       hadoopConf,
       logPath,
