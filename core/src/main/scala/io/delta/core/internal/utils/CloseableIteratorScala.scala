@@ -72,7 +72,11 @@ object CloseableIteratorScala {
 
   implicit class RichCloseableIteratorJava[T](inner: CloseableIterator[T]) {
     def asScala: CloseableIteratorScala[T] = {
-      new CloseableIteratorScalaImpl[T](inner.asScala, inner.close)
+      val scalaIter = new Iterator[T] {
+        override def hasNext: Boolean = inner.hasNext
+        override def next(): T = inner.next()
+      }
+      new CloseableIteratorScalaImpl[T](scalaIter, inner.close)
     }
   }
 
