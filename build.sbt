@@ -591,6 +591,19 @@ lazy val core = (project in file("core"))
     name := "delta-core",
     commonSettings,
     skipReleaseSettings,
+    libraryDependencies ++= Seq(
+      "org.apache.hadoop" % "hadoop-client" % hadoopVersion % "test",
+      "com.github.mjakubowski84" %% "parquet4s-core" % parquet4sVersion  % "test" excludeAll (
+        ExclusionRule("org.slf4j", "slf4j-api")
+        ),
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.12.3" % "test",
+      "org.json4s" %% "json4s-jackson" % "3.7.0-M11"  % "test" excludeAll (
+        ExclusionRule("com.fasterxml.jackson.core"),
+        ExclusionRule("com.fasterxml.jackson.module")
+      ),
+      "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
+      "io.delta" % "delta-storage" % deltaStorageVersion % "test",
+    )
   )
 
 

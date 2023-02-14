@@ -316,14 +316,6 @@ private[internal] object DeltaErrors {
     new IllegalStateException(msg)
   }
 
-  @varargs def illegalExpressionValueType(
-      exprName: String,
-      expectedType: String,
-      realTypes: String*): RuntimeException = {
-    new IllegalArgumentException(
-      s"$exprName expression requires $expectedType type. But found ${realTypes.mkString(", ")}");
-  }
-
   def logStoreConfConflicts(classConf: Seq[String], schemeConf: Seq[String]): Throwable = {
     val schemeConfStr = schemeConf.mkString(", ")
     val classConfStr = classConf.mkString(", ")
