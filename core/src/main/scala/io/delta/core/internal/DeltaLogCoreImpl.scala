@@ -42,10 +42,13 @@ class DeltaLogCoreImpl(val logPath: String, val logHelper: DeltaLogHelper)
   protected def getLogSegmentForVersion(
     startCheckpoint: Option[Long],
     versionToLoad: Option[Long] = None): DeltaLogSegment = {
+    val listedFiles =
+      logHelper.listLogFiles(checkpointPrefix(logPath, startCheckpoint.getOrElse(0L))).asScala.toSeq
+    println(listedFiles)
 
     // List from the starting checkpoint. If a checkpoint doesn't exist, this will still return
     // deltaVersion=0.
-    val newFiles = logHelper.listLogFiles(logPath).asScala
+    val newFiles = listedFiles.iterator
       // Pick up all checkpoint and delta files
       .filter { file => isCheckpointFile(file) || isDeltaFile(file) }
       // filter out files that aren't atomically visible. Checkpoint files of 0 size are invalid
