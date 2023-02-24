@@ -6,10 +6,10 @@ import scala.collection.JavaConverters._
 
 import io.delta.core.internal.utils.FileNames._
 import io.delta.core.internal.utils.Logging
-import io.delta.standalone.core.{DeltaLogCore, DeltaLogHelper, DeltaSnapshotCore}
+import io.delta.standalone.core.{DeltaLogCore, LogReplayHelper, DeltaSnapshotCore}
 
 
-class DeltaLogCoreImpl(val logPath: String, val logHelper: DeltaLogHelper)
+class DeltaLogCoreImpl(val logPath: String, val logHelper: LogReplayHelper)
   extends DeltaLogCore with Logging {
 
   val dataPath = new File(logPath).getParent()

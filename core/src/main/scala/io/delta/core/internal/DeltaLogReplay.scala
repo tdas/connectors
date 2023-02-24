@@ -5,11 +5,12 @@ import java.net.URI
 import io.delta.core.internal.utils.CloseableIteratorScala
 import io.delta.core.internal.utils.CloseableIteratorScala._
 import io.delta.standalone.actions._
-import io.delta.standalone.core.DeltaLogHelper
+import io.delta.standalone.core.LogReplayHelper
+import io.delta.standalone.data.RowRecord
 
 class DeltaLogReplay(
   logSegment: DeltaLogSegment,
-  logHelper: DeltaLogHelper) {
+  logHelper: LogReplayHelper) {
 
   lazy val (protocol, metadata) = loadTableProtocolAndMetadata()
 
@@ -173,14 +174,16 @@ class DeltaLogReplay(
        */
       private def getNextIter: Option[CloseableIteratorScala[(Action, Boolean)]] = {
         val nextFile = reverseFilesIter.next()
-
-        if (nextFile.endsWith(".json")) {
-          Some(logHelper.readVersionFile(nextFile).asScala.mapAsCloseable((_, false)))
+        val iter = if (nextFile.endsWith(".json")) {
+          logHelper.readJsonFile(nextFile, null)
+            .asScalaCloseable.mapAsCloseable(x => (rowToAction(x), false))
         } else if (nextFile.endsWith(".parquet")) {
-          Some(logHelper.readCheckpointFile(nextFile).asScala.mapAsCloseable((_, true)))
+          logHelper.readParquetFile(nextFile, null, Array.empty)
+            .asScalaCloseable.mapAsCloseable(x => (rowToAction(x), true))
         } else {
           throw new IllegalStateException(s"unexpected log file path: $nextFile")
         }
+        Some(iter)
       }
 
       /**
@@ -231,6 +234,10 @@ class DeltaLogReplay(
   def canonicalizePath(path: String): String = {
     // TODO: fix this using the DeltaLogHelper
     path
+  }
+
+  def rowToAction(row: RowRecord): Action = {
+    null
   }
 
   implicit def toURI(path: String): URI = new URI(path)

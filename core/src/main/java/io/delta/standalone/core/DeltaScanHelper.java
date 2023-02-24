@@ -2,14 +2,14 @@ package io.delta.standalone.core;
 
 import java.util.TimeZone;
 
-import io.delta.standalone.data.RowBatch;
+import io.delta.standalone.data.ColumnarRowBatch;
 import io.delta.standalone.types.StructType;
 import io.delta.standalone.utils.CloseableIterator;
 
 public interface DeltaScanHelper {
-    CloseableIterator<RowBatch> readParquetDataFile(
+    CloseableIterator<ColumnarRowBatch> readParquetFile(
             String filePath,
-            StructType schema,
+            StructType readSchema,
             TimeZone timeZone
     );
 
