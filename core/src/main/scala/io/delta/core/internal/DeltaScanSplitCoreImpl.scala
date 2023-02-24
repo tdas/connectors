@@ -39,11 +39,11 @@ class DeltaScanSplitCoreImpl(
     new CloseableIterator[RowBatch] {
       val parquetReadFields =
         schema.getFields.filterNot(f => filePartitionValues.contains(f.getName))
-      val iter = scanHelper.readParquetDataFile(
+      val iter = scanHelper.readParquetFile(
         filePath, new StructType(parquetReadFields), readTimeZone)
       override def hasNext: Boolean = iter.hasNext
       override def next(): RowBatch = {
-        val extendedRows = iter.next().toRowIterator.asScala.mapAsCloseable(row =>
+        val extendedRows = iter.next().getRows.asScalaCloseable.mapAsCloseable(row =>
           CombinedRowRecord(row, schema, filePartitionValues).asInstanceOf[RowRecord]
         )
         new DeltaRowBatchImpl(extendedRows.asJava)

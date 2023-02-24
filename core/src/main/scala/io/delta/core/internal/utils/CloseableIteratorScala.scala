@@ -19,7 +19,6 @@ class CloseableIteratorScalaImpl[T](inner: Iterator[T], onClose: () => Unit)
     if (!innerClosed) {
       innerHasNext = inner.hasNext
       if (!innerHasNext) close()
-
       innerHasNext
     } else false
   }
@@ -39,6 +38,7 @@ class CloseableIteratorScalaImpl[T](inner: Iterator[T], onClose: () => Unit)
 object CloseableIteratorScala {
 
   implicit class RichCloseableIteratorScala[T](inner: CloseableIteratorScala[T]) {
+    require(inner != null)
     def mapAsCloseable[B](f: T => B): CloseableIteratorScala[B] = {
       new CloseableIteratorScalaImpl[B](inner.map(f), inner.close)
     }
@@ -52,7 +52,8 @@ object CloseableIteratorScala {
 
         override def hasNext: Boolean = {
           while ((currentIterator == null || !currentIterator.hasNext) && inner.hasNext) {
-            currentIterator = f(inner.next())
+            val next = inner.next()
+            currentIterator = f(next)
           }
           currentIterator != null && currentIterator.hasNext
         }
@@ -71,7 +72,8 @@ object CloseableIteratorScala {
   }
 
   implicit class RichCloseableIteratorJava[T](inner: CloseableIterator[T]) {
-    def asScala: CloseableIteratorScala[T] = {
+    require(inner != null)
+    def asScalaCloseable: CloseableIteratorScala[T] = {
       val scalaIter = new Iterator[T] {
         override def hasNext: Boolean = inner.hasNext
         override def next(): T = inner.next()
@@ -81,6 +83,8 @@ object CloseableIteratorScala {
   }
 
   implicit class RichIteratorJava[T](inner: java.util.Iterator[T]) {
+    require(inner != null)
+
     def asScalaClosable: CloseableIteratorScala[T] = {
       import scala.collection.JavaConverters._
       new CloseableIteratorScalaImpl[T](inner.asScala, () => {})
@@ -88,6 +92,7 @@ object CloseableIteratorScala {
   }
 
   implicit class RichIterator[T](inner: Iterator[T]) {
+    require(inner != null)
     def asClosable: CloseableIteratorScala[T] = {
       new CloseableIteratorScalaImpl[T](inner, () => {})
     }
