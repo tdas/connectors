@@ -19,6 +19,7 @@ package io.delta.standalone;
 import java.util.Optional;
 
 import io.delta.standalone.actions.AddFile;
+import io.delta.standalone.core.DeltaScanTaskCore;
 import io.delta.standalone.data.CloseableIterator;
 import io.delta.standalone.expressions.Expression;
 
@@ -64,4 +65,6 @@ public interface DeltaScan {
      *         caller should still apply them on the returned files.
      */
     Optional<Expression> getResidualPredicate();
+
+    CloseableIterator<DeltaScanTaskCore> getTasks();
 }

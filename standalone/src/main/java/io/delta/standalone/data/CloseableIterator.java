@@ -23,4 +23,4 @@ import java.util.Iterator;
  * An {@link Iterator} that also implements the {@link Closeable} interface. The caller
  * should call {@link #close()} method to free all resources properly after using the iterator.
  */
-public interface CloseableIterator<T> extends Iterator<T>, Closeable { }
+public interface CloseableIterator<T> extends io.delta.standalone.utils.CloseableIterator<T>{ }

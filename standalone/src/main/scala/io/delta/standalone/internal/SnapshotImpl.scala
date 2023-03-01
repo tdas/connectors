@@ -30,9 +30,9 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 
 import io.delta.standalone.{DeltaScan, Snapshot}
 import io.delta.standalone.actions.{AddFile => AddFileJ, Metadata => MetadataJ, Protocol => ProtocolJ, RemoveFile => RemoveFileJ, SetTransaction => SetTransactionJ}
+import io.delta.standalone.core.DeltaScanHelper
 import io.delta.standalone.data.{CloseableIterator, RowRecord => RowParquetRecordJ}
 import io.delta.standalone.expressions.Expression
-
 import io.delta.standalone.internal.actions.{AddFile, InMemoryLogReplay, MemoryOptimizedLogReplay, Metadata, Parquet4sSingleActionWrapper, Protocol, RemoveFile, SetTransaction, SingleAction}
 import io.delta.standalone.internal.data.CloseableParquetDataIterator
 import io.delta.standalone.internal.exception.DeltaErrors
@@ -59,13 +59,16 @@ private[internal] class SnapshotImpl(
   import SnapshotImpl._
 
   private val memoryOptimizedLogReplay =
-    new MemoryOptimizedLogReplay(files, deltaLog.store, hadoopConf, deltaLog.timezone)
+    new MemoryOptimizedLogReplay(this, files, deltaLog.store, hadoopConf, deltaLog.timezone)
 
   ///////////////////////////////////////////////////////////////////////////
   // Public API Methods
   ///////////////////////////////////////////////////////////////////////////
 
-  override def scan(): DeltaScan = new DeltaScanImpl(memoryOptimizedLogReplay)
+  override def scan(): DeltaScan = this.scan(null.asInstanceOf[DeltaScanHelper])
+
+  override def scan(scanHelper: DeltaScanHelper): DeltaScan =
+    new DeltaScanImpl(memoryOptimizedLogReplay, scanHelper)
 
   override def scan(predicate: Expression): DeltaScan =
     new FilteredDeltaScanImpl(
@@ -101,7 +104,7 @@ private[internal] class SnapshotImpl(
    * actions, convert them to Java actions (as per the [[DeltaScan]] interface), and then
    * convert them back to Scala actions.
    */
-  def scanScala(): DeltaScanImpl = new DeltaScanImpl(memoryOptimizedLogReplay)
+  def scanScala(): DeltaScanImpl = new DeltaScanImpl(memoryOptimizedLogReplay, null)
 
   def scanScala(predicate: Expression): DeltaScanImpl =
     new FilteredDeltaScanImpl(
@@ -320,7 +323,7 @@ private class InitialSnapshotImpl(
   extends SnapshotImpl(hadoopConf, logPath, -1, LogSegment.empty(logPath), -1, deltaLog, -1) {
 
   private val memoryOptimizedLogReplay =
-    new MemoryOptimizedLogReplay(Nil, deltaLog.store, hadoopConf, deltaLog.timezone)
+    new MemoryOptimizedLogReplay(this, Nil, deltaLog.store, hadoopConf, deltaLog.timezone)
 
   override lazy val state: SnapshotImpl.State = {
     SnapshotImpl.State(Nil, Nil, Nil, 0L, 0L, 0L, 0L)
@@ -330,7 +333,11 @@ private class InitialSnapshotImpl(
 
   override lazy val metadataScala: Metadata = Metadata()
 
-  override def scan(): DeltaScan = new DeltaScanImpl(memoryOptimizedLogReplay)
+  override def scan(): DeltaScan = this.scan(null.asInstanceOf[DeltaScanHelper])
+
+  override def scan(scanHelper: DeltaScanHelper): DeltaScan = {
+    new DeltaScanImpl(memoryOptimizedLogReplay, scanHelper)
+  }
 
   override def scan(predicate: Expression): DeltaScan =
     new FilteredDeltaScanImpl(
