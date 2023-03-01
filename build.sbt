@@ -454,6 +454,7 @@ lazy val standaloneWithoutParquetUtils = project
 
 lazy val standalone = (project in file("standalone"))
   .dependsOn(core)
+  .dependsOn(core % "test->test")
   .enablePlugins(GenJavadocPlugin, JavaUnidocPlugin)
   .settings(
     name := "delta-standalone-original",
@@ -474,6 +475,7 @@ lazy val standalone = (project in file("standalone"))
       ),
       "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
       "io.delta" % "delta-storage" % deltaStorageVersion,
+      /*
       "org.apache.arrow" % "arrow-vector" % arrowVersion excludeAll (
         ExclusionRule("com.fasterxml.jackson.core"),
         ExclusionRule("com.fasterxml.jackson.module")
@@ -487,6 +489,7 @@ lazy val standalone = (project in file("standalone"))
         ExclusionRule("com.fasterxml.jackson.module")
       ),
       "org.xerial.snappy" % "snappy-java" % snappyVersion,
+       */
 
       // Compiler plugins
       // -- Bump up the genjavadoc version explicitly to 0.18 to work with Scala 2.12
@@ -592,6 +595,8 @@ lazy val core = (project in file("core"))
     commonSettings,
     skipReleaseSettings,
     libraryDependencies ++= Seq(
+      "org.roaringbitmap" % "RoaringBitmap" % "0.9.25",
+      "com.google.guava" % "guava" % "16.0.1",
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % "test",
       "org.apache.arrow" % "arrow-dataset" % "11.0.0" % "test",
       "org.apache.arrow" % "arrow-memory-unsafe" % arrowVersion % "test" excludeAll (

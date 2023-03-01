@@ -3,18 +3,18 @@ package io.delta.core.internal
 import java.util.TimeZone
 
 import io.delta.core.internal.utils.CloseableIteratorScala._
-import io.delta.standalone.core.{DeltaScanHelper, DeltaScanSplitCore}
+import io.delta.standalone.core.{DeltaScanHelper, DeltaScanTaskCore}
 import io.delta.standalone.data.{RowRecord, RowBatch}
 import io.delta.standalone.types._
 import io.delta.standalone.utils.CloseableIterator
 
 
-class DeltaScanSplitCoreImpl(
+class DeltaScanTaskCoreImpl(
     filePath: String,
     filePartitionValues: Map[String, String],
     schema: StructType,
     readTimeZone: TimeZone,
-    scanHelper: DeltaScanHelper) extends DeltaScanSplitCore {
+    scanHelper: DeltaScanHelper) extends DeltaScanTaskCore {
 
 
   override def getDataAsRows(): CloseableIterator[RowBatch] = {

@@ -20,6 +20,7 @@ import java.util.List;
 
 import io.delta.standalone.actions.AddFile;
 import io.delta.standalone.actions.Metadata;
+import io.delta.standalone.core.DeltaScanHelper;
 import io.delta.standalone.data.CloseableIterator;
 import io.delta.standalone.data.RowRecord;
 import io.delta.standalone.expressions.Expression;
@@ -37,6 +38,11 @@ public interface Snapshot {
      * @return a {@link DeltaScan} of the files in this snapshot
      */
     DeltaScan scan();
+
+    /**
+     * @return a {@link DeltaScan} of the files in this snapshot
+     */
+    DeltaScan scan(DeltaScanHelper scanHelper);
 
     /**
      * @param predicate  the predicate to be used to filter the files in this snapshot.

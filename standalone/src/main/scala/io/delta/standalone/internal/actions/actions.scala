@@ -115,7 +115,9 @@ private[internal] case class AddFile(
     dataChange: Boolean,
     @JsonRawValue
     stats: String = null,
-    tags: Map[String, String] = null) extends FileAction {
+    tags: Map[String, String] = null,
+    deletionVector: DeletionVectorDescriptor = null
+) extends FileAction {
   require(path.nonEmpty)
 
   override def wrap: SingleAction = SingleAction(add = this)

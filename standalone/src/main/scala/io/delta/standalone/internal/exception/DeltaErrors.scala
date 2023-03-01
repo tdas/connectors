@@ -341,6 +341,11 @@ private[internal] object DeltaErrors {
       "non-partitioned column")
   }
 
+  def cannotReconstructPathFromURI(uri: String): Throwable = {
+    new RuntimeException(s"A uri ($uri) which cannot be turned into a relative path " +
+      s"was found in the transaction log.")
+  }
+
   ///////////////////////////////////////////////////////////////////////////
   // Helper Methods
   ///////////////////////////////////////////////////////////////////////////
