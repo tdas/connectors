@@ -81,6 +81,7 @@ class DeltaLogReplay(
 
           action match {
             case add: AddFile =>
+              println("Replaying add file: " + add)
               val canonicalizeAdd = new AddFile(
                 canonicalizePath(add.getPath),
                 add.getPartitionValues,
@@ -174,6 +175,7 @@ class DeltaLogReplay(
        */
       private def getNextIter: Option[CloseableIteratorScala[(Action, Boolean)]] = {
         val nextFile = reverseFilesIter.next()
+        println("Log file: " + nextFile)
         val iter = if (nextFile.endsWith(".json")) {
           logHelper.readJsonFile(nextFile, null)
             .asScalaCloseable.mapAsCloseable(x => (rowToAction(x), false))
@@ -237,7 +239,7 @@ class DeltaLogReplay(
   }
 
   def rowToAction(row: RowRecord): Action = {
-    null
+    throw new NotImplementedError()
   }
 
   implicit def toURI(path: String): URI = new URI(path)

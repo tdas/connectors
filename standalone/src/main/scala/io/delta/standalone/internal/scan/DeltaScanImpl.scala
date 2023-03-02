@@ -34,7 +34,7 @@ import io.delta.standalone.internal.util.{ConversionUtils, FileNames}
 /**
  * Scala implementation of Java interface [[DeltaScan]].
  */
-private[internal] class DeltaScanImpl(
+class DeltaScanImpl(
     replay: MemoryOptimizedLogReplay,
     scanHelper: DeltaScanHelper
   ) extends DeltaScan {
@@ -179,7 +179,9 @@ private[internal] class DeltaScanImpl(
 
       override def next(): DeltaScanTaskCore = {
         val addFile = iter.next()
-        val tablePath = replay.snapshot.deltaLog.getPath.getParent
+        println("Add file path: " + addFile.getPath)
+        val tablePath = replay.snapshot.deltaLog.dataPath
+        println("Table path: " + tablePath)
         new DeltaScanTaskCoreImpl(
           FileNames.absolutePath(tablePath, addFile.getPath).toString,
           addFile.getPartitionValues.asScala.toMap,

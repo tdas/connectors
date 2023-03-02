@@ -27,8 +27,8 @@ object ArrowUtils {
       throw new IllegalStateException("Missing timezoneId where it is mandatory.")
     case _: TimestampType => new ArrowType.Timestamp(TimeUnit.MICROSECOND, timeZoneId)
     case _: NullType => ArrowType.Null.INSTANCE
-    // case DecimalType.Fixed(precision, scale) => new ArrowType.Decimal(precision, scale)
-    // case TimestampNTZType => new ArrowType.Timestamp(TimeUnit.MICROSECOND, null)
+    case d: DecimalType => new ArrowType.Decimal(d.getPrecision, d.getScale)
+    case _: TimestampType => new ArrowType.Timestamp(TimeUnit.MICROSECOND, null)
     // case _: YearMonthIntervalType => new ArrowType.Interval(IntervalUnit.YEAR_MONTH)
     // case _: DayTimeIntervalType => new ArrowType.Duration(TimeUnit.MICROSECOND)
     case _ =>
@@ -50,10 +50,10 @@ object ArrowUtils {
     case ts: ArrowType.Timestamp if ts.getUnit == TimeUnit.MICROSECOND => new TimestampType
     case ArrowType.Null.INSTANCE => new NullType
     case date: ArrowType.Date if date.getUnit == DateUnit.DAY => new DateType
-    /*
-    case d: ArrowType.Decimal => DecimalType(d.getPrecision, d.getScale)
+    case d: ArrowType.Decimal => new DecimalType(d.getPrecision, d.getScale)
     case ts: ArrowType.Timestamp if ts.getUnit == TimeUnit.MICROSECOND && ts.getTimezone == null =>
-      TimestampNTZType
+      new TimestampType()
+    /*
     case yi: ArrowType.Interval if yi.getUnit == IntervalUnit.YEAR_MONTH => YearMonthIntervalType()
     case di: ArrowType.Duration if di.getUnit == TimeUnit.MICROSECOND => DayTimeIntervalType()
     */
