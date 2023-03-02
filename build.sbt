@@ -468,28 +468,14 @@ lazy val standalone = (project in file("standalone"))
       "com.github.mjakubowski84" %% "parquet4s-core" % parquet4sVersion excludeAll (
         ExclusionRule("org.slf4j", "slf4j-api")
       ),
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.12.3",
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.4",
       "org.json4s" %% "json4s-jackson" % "3.7.0-M11" excludeAll (
         ExclusionRule("com.fasterxml.jackson.core"),
         ExclusionRule("com.fasterxml.jackson.module")
       ),
       "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
       "io.delta" % "delta-storage" % deltaStorageVersion,
-      /*
-      "org.apache.arrow" % "arrow-vector" % arrowVersion excludeAll (
-        ExclusionRule("com.fasterxml.jackson.core"),
-        ExclusionRule("com.fasterxml.jackson.module")
-      ),
-      "org.apache.arrow" % "arrow-memory" % arrowVersion excludeAll (
-        ExclusionRule("com.fasterxml.jackson.core"),
-        ExclusionRule("com.fasterxml.jackson.module")
-      ),
-      "org.apache.arrow" % "arrow-memory-unsafe" % arrowVersion excludeAll (
-        ExclusionRule("com.fasterxml.jackson.core"),
-        ExclusionRule("com.fasterxml.jackson.module")
-      ),
       "org.xerial.snappy" % "snappy-java" % snappyVersion,
-       */
 
       // Compiler plugins
       // -- Bump up the genjavadoc version explicitly to 0.18 to work with Scala 2.12
@@ -597,14 +583,15 @@ lazy val core = (project in file("core"))
     libraryDependencies ++= Seq(
       "org.roaringbitmap" % "RoaringBitmap" % "0.9.25",
       "com.google.guava" % "guava" % "16.0.1",
+
+
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % "test",
       "org.apache.arrow" % "arrow-dataset" % "11.0.0" % "test",
       "org.apache.arrow" % "arrow-memory-unsafe" % arrowVersion % "test" excludeAll (
         ExclusionRule("com.fasterxml.jackson.core"),
         ExclusionRule("com.fasterxml.jackson.module")
       ),
-
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.12.3" % "test",
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.4" % "test",
       "org.json4s" %% "json4s-jackson" % "3.7.0-M11"  % "test" excludeAll (
         ExclusionRule("com.fasterxml.jackson.core"),
         ExclusionRule("com.fasterxml.jackson.module")

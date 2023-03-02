@@ -1,6 +1,7 @@
 package io.delta.core;
 
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import io.delta.standalone.data.ColumnVector;
@@ -35,6 +36,7 @@ class ArrowColumnVector implements ColumnVector {
     public ArrowColumnVector(ValueVector vector) {
         this.type = ArrowUtils.fromArrowField(vector.getField());
         initAccessor(vector);
+        System.out.println("" + vector.getName() + " -> " + accessor.getClass().getSimpleName());
     }
 
     @Override
@@ -112,7 +114,7 @@ class ArrowColumnVector implements ColumnVector {
 
     /*
     @Override
-    public Decimal getDecimal(int rowId, int precision, int scale) {
+    public BigDecimal getDecimal(int rowId, int precision, int scale) {
         if (isNullAt(rowId)) return null;
         return accessor.getDecimal(rowId, precision, scale);
     }
@@ -147,9 +149,9 @@ class ArrowColumnVector implements ColumnVector {
             accessor = new DoubleAccessor((Float8Vector) vector);
         } else if (vector instanceof VarCharVector) {
             accessor = new StringAccessor((VarCharVector) vector);
-        } /* else if (vector instanceof DecimalVector) {
+        } else if (vector instanceof DecimalVector) {
             accessor = new DecimalAccessor((DecimalVector) vector);
-        } */ else if (vector instanceof VarBinaryVector) {
+        } else if (vector instanceof VarBinaryVector) {
             accessor = new BinaryAccessor((VarBinaryVector) vector);
         } else if (vector instanceof DateDayVector) {
             accessor = new DateAccessor((DateDayVector) vector);
@@ -178,7 +180,8 @@ class ArrowColumnVector implements ColumnVector {
         } else if (vector instanceof DurationVector) {
             accessor = new DurationAccessor((DurationVector) vector);
         } else {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException(
+                "could not get accessor for " + vector.getClass().getCanonicalName());
         }
     }
 
@@ -215,7 +218,7 @@ class ArrowColumnVector implements ColumnVector {
         }
 
         int getInt(int rowId) {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException("in " + this.getClass().getCanonicalName());
         }
 
         long getLong(int rowId) {
@@ -238,11 +241,11 @@ class ArrowColumnVector implements ColumnVector {
             throw new UnsupportedOperationException();
         }
 
-        /*
-        Decimal getDecimal(int rowId, int precision, int scale) {
+        BigDecimal getDecimal(int rowId, int precision, int scale) {
             throw new UnsupportedOperationException();
         }
 
+        /*
         ColumnarArray getArray(int rowId) {
             throw new UnsupportedOperationException();
         }
@@ -374,7 +377,6 @@ class ArrowColumnVector implements ColumnVector {
         }
     }
 
-    /*
     static class DecimalAccessor extends ArrowVectorAccessor {
 
         private final DecimalVector accessor;
@@ -385,12 +387,11 @@ class ArrowColumnVector implements ColumnVector {
         }
 
         @Override
-        final Decimal getDecimal(int rowId, int precision, int scale) {
+        final BigDecimal getDecimal(int rowId, int precision, int scale) {
             if (isNullAt(rowId)) return null;
-            return Decimal.apply(accessor.getObject(rowId), precision, scale);
+            return accessor.getObject(rowId);
         }
     }
-    */
 
     static class StringAccessor extends ArrowVectorAccessor {
 

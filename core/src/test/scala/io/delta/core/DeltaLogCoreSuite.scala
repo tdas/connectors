@@ -155,6 +155,8 @@ class DeltaLogCoreSuite extends FunSuite {
 
         val value = f.getDataType match {
           case _: IntegerType =>  toStr(record.getInt)
+          case _: LongType =>  toStr(record.getLong)
+          case _: ShortType => toStr(record.getShort)
           case _: DoubleType =>  toStr(record.getDouble)
           case _: BooleanType =>  toStr(record.getBoolean)
           case _: StringType => toStr(record.getString)

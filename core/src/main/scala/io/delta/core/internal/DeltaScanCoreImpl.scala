@@ -20,6 +20,7 @@ class DeltaScanCoreImpl(
 
       override def next(): DeltaScanTaskCore = {
         val addFile = iter.next()
+        println("Add file: " + addFile)
         new DeltaScanTaskCoreImpl(
           FileNames.absolutePath(snapshot.log.dataPath, addFile.getPath),
           addFile.getPartitionValues.asScala.toMap,
