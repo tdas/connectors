@@ -36,7 +36,7 @@ case class StoredDeletionVector(
   require(tableDataPath.isDefined || !dvDescriptor.isOnDisk,
     "Table path is required for on-disk deletion vectors")
 
-  def load(generateInputStream: Path => DataInputStream): RoaringBitmapArray = {
+  def load(generateInputStream: String => DataInputStream): RoaringBitmapArray = {
     if (isEmpty) {
       new RoaringBitmapArray()
     } else if (isInline) {
@@ -46,10 +46,12 @@ case class StoredDeletionVector(
 
       var stream: DataInputStream = null
       try {
-        stream = generateInputStream(onDiskPath.get)
+        stream = generateInputStream(onDiskPath.get.toString)
         loadFromStream(stream, dvDescriptor.offset.getOrElse(0), dvDescriptor.sizeInBytes)
       } finally {
-        stream.close()
+        if (stream != null) {
+          stream.close()
+        }
       }
     }
   }

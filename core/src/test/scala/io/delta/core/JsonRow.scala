@@ -55,7 +55,7 @@ class JsonRow(rootNode: ObjectNode) extends RowRecord {
     val keyValuePairs = objectNode.fields().asScala.map { entry =>
       entry.getKey -> getValue(entry.getValue)
     }
-    if (keyValuePairs.isEmpty) return util.Map.of[K, V]()
+    if (keyValuePairs.isEmpty) return util.Collections.emptyMap[K, V]()
     keyValuePairs.toMap.asJava.asInstanceOf[util.Map[K, V]]
   }
 

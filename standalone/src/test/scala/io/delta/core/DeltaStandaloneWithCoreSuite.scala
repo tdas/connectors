@@ -2,6 +2,7 @@ package io.delta.core
 
 // scalastyle:off
 
+import java.io.{DataInputStream, File}
 import java.util.TimeZone
 
 import scala.collection.JavaConverters._
@@ -14,7 +15,7 @@ import org.apache.hadoop.fs.Path
 import org.scalatest.FunSuite
 
 import io.delta.core.internal.{DeltaLogCoreImpl, DeltaScanCoreImpl}
-import io.delta.standalone.core.DeltaScanHelper
+import io.delta.standalone.core.{DeltaScanHelper, RowIndexFilter}
 import io.delta.standalone.data.{ColumnarRowBatch, RowRecord}
 import io.delta.standalone.types._
 import io.delta.standalone.utils.CloseableIterator
@@ -26,8 +27,20 @@ class ArrowScanHelper(val hadoopConf: Configuration) extends DeltaScanHelper {
   override def readParquetFile(
       filePath: String,
       readSchema: StructType,
-      timeZone: TimeZone): CloseableIterator[ColumnarRowBatch] = {
+      timeZone: TimeZone,
+      filter: RowIndexFilter
+  ): CloseableIterator[ColumnarRowBatch] = {
+    if (filter != null) {
+      val test = new Array[Boolean](10)
+      filter.materializeIntoVector(0, 10, test)
+      println("dv for first 10 rows:" + test.toSeq)
+    }
     ArrowParquetReader.readAsColumnarBatches(filePath, readSchema, ArrowScanHelper.allocator)
+  }
+
+  override def readDeletionVectorFile(filePath: String): DataInputStream = {
+    val fs = new Path(filePath).getFileSystem(hadoopConf)
+    fs.open(new Path(filePath))
   }
 }
 
@@ -36,6 +49,9 @@ object ArrowScanHelper {
 }
 
 class DeltaStandaloneWithCoreSuite extends FunSuite {
+
+  val resourcePath = new File("../standalone/src/test/resources/delta").getCanonicalFile
+  val tableDVSmallPath =new File(resourcePath, "table-with-dv-small").getCanonicalPath
 
   test("scan") {
     GoldenTableUtils.withGoldenTable("data-reader-primitives") { tablePath =>
@@ -46,6 +62,15 @@ class DeltaStandaloneWithCoreSuite extends FunSuite {
       val scan = snapshot.scan(scanHelper)
       printRows(scan.asInstanceOf[DeltaScanImpl].getRows().asScala)
     }
+  }
+
+  test("dv") {
+    val conf = new Configuration()
+    val log = DeltaLog.forTable(conf, tableDVSmallPath)
+    val scanHelper = new ArrowScanHelper(conf)
+    val snapshot = log.snapshot()
+    val scan = snapshot.scan(scanHelper)
+    printRows(scan.asInstanceOf[DeltaScanImpl].getRows().asScala)
   }
 
   def printRows(iterator: Iterator[RowRecord]): Unit = {

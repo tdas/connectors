@@ -151,7 +151,8 @@ private[internal] case class RemoveFile(
     partitionValues: Map[String, String] = null,
     @JsonDeserialize(contentAs = classOf[java.lang.Long])
     size: Option[Long] = None,
-    tags: Map[String, String] = null) extends FileAction {
+    tags: Map[String, String] = null,
+    deletionVector: DeletionVectorDescriptor = null) extends FileAction {
   override def wrap: SingleAction = SingleAction(remove = this)
 
   @JsonIgnore
