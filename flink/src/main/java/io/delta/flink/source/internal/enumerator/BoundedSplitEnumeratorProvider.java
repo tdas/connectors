@@ -3,12 +3,17 @@ package io.delta.flink.source.internal.enumerator;
 import java.util.Collections;
 import static java.util.Collections.emptyList;
 
+import io.delta.core.SimpleLogReplayHelper;
+import io.delta.core.internal.DeltaLogCoreImpl;
 import io.delta.flink.internal.options.DeltaConnectorConfiguration;
 import io.delta.flink.source.internal.enumerator.processor.SnapshotProcessor;
 import io.delta.flink.source.internal.file.AddFileEnumerator;
 import io.delta.flink.source.internal.state.DeltaEnumeratorStateCheckpoint;
 import io.delta.flink.source.internal.state.DeltaSourceSplit;
 import io.delta.flink.source.internal.utils.SourceUtils;
+import io.delta.standalone.core.DeltaLogCore;
+import io.delta.standalone.core.DeltaSnapshotCore;
+import io.delta.standalone.core.LogReplayHelper;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.connector.file.src.assigners.FileSplitAssigner;
@@ -50,6 +55,12 @@ public class BoundedSplitEnumeratorProvider implements SplitEnumeratorProvider {
             SplitEnumeratorContext<DeltaSourceSplit> enumContext,
             DeltaConnectorConfiguration sourceConfiguration) {
 
+        final String logPath = SourceUtils.pathToString(deltaTablePath) + "/_delta_log";
+        final LogReplayHelper logReplayHelper = new SimpleLogReplayHelper(configuration);
+
+        DeltaLogCore deltaLogCore = new DeltaLogCoreImpl(logPath, logReplayHelper);
+        DeltaSnapshotCore deltaSnapshotCore = deltaLogCore.getLatestSnapshot();
+
         DeltaLog deltaLog =
             DeltaLog.forTable(configuration, SourceUtils.pathToString(deltaTablePath));
 
@@ -61,7 +72,7 @@ public class BoundedSplitEnumeratorProvider implements SplitEnumeratorProvider {
 
         SnapshotProcessor snapshotProcessor =
             new SnapshotProcessor(deltaTablePath, initSnapshot,
-                fileEnumeratorProvider.create(), Collections.emptySet());
+                fileEnumeratorProvider.create(), Collections.emptySet(), deltaSnapshotCore, configuration);
 
         return new BoundedDeltaSourceSplitEnumerator(
             deltaTablePath, snapshotProcessor, splitAssignerProvider.create(emptyList()),
