@@ -31,6 +31,8 @@ public class RowDataFormat implements DeltaBulkFormat<RowData> {
     public Reader<RowData> createReader(
             org.apache.flink.configuration.Configuration configuration,
             DeltaSourceSplit deltaSourceSplit) throws IOException {
+        System.out.println(
+            "Scott > RowDataFormat :: createReader, split " + deltaSourceSplit.path());
         return new DeltaCoreRowDataReader(deltaSourceSplit.deltaScanTaskCore);
 //        return this.decoratedInputFormat.createReader(configuration, deltaSourceSplit);
     }

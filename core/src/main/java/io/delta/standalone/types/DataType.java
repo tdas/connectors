@@ -38,6 +38,7 @@
 
 package io.delta.standalone.types;
 
+import java.io.Serializable;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -47,7 +48,7 @@ import java.util.Objects;
  * <a href="https://github.com/apache/spark/blob/master/sql/catalyst/src/main/scala/org/apache/spark/sql/types/DataType.scala" target="_blank">DataType</a>,
  * allowing Spark SQL schemas to be represented in Java.
  */
-public abstract class DataType {
+public abstract class DataType implements Serializable {
     /**
      * Parses the input {@code json} into a {@link DataType}.
      *

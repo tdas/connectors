@@ -32,8 +32,11 @@ public class SimpleDeltaCoreSourceSuite extends TestLogger {
 
         ClientAndIterator<RowData> client = DataStreamUtils.collectWithClient(stream, "Bounded Delta Source Test");
 
+        int count = 0;
         while (client.iterator.hasNext()) {
             System.out.println(client.iterator.next());
+            count++;
         }
+        System.out.println("COUNT: " + count);
     }
 }
