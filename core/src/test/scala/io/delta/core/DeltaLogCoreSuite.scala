@@ -70,9 +70,9 @@ class TestScanHelper(val hadoopConf: Configuration) extends DeltaScanHelper {
       filePath: String,
       readSchema: StructType,
       timeZone: TimeZone,
-      deletionVector: RowIndexFilter
+      filter: RowIndexFilter
   ): CloseableIterator[ColumnarRowBatch] = {
-    ArrowParquetReader.readAsColumnarBatches(filePath, readSchema, TestScanHelper.allocator)
+    ArrowParquetReader.readAsColumnarBatches(filePath, readSchema, TestScanHelper.allocator, filter)
   }
 
 

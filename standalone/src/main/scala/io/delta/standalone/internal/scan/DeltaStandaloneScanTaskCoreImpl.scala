@@ -20,7 +20,6 @@ class DeltaStandaloneScanTaskCoreImpl(
   schema: StructType,
   deletionVector: DeletionVectorDescriptor,
   readTimeZone: TimeZone,
-  // add DV info
   scanHelper: DeltaScanHelper) extends DeltaScanTaskCore {
 
 
@@ -48,7 +47,6 @@ class DeltaStandaloneScanTaskCoreImpl(
     } else {
       new KeepAllRowsFilter
     }
-    // if deletionVector is not null read DV and pass to readParquetFile
 
     new CloseableIterator[RowBatch] {
       val parquetReadFields =
@@ -89,18 +87,6 @@ class DeltaStandaloneScanTaskCoreImpl(
     }
   }
 
-  // you basically need to copy over DeletedRowsMarkingFilter
-  // matirializeIntoVector for each batch
-  // we return an interator of RowBatches!!
-
-  // just copy this whole class over to standalone
-//  protected def readDV(): Array[Boolean] = {
-//    // need the table path
-//    val dvStore = StoredDeletionVector(deletionVector, Some(tablePath))
-//    val bitmap = dvStore.load(scanHelper.readDeletionVectorFile(dvStore.onDiskPath.get))
-//    null
-//  }
-
   def createInstance(
     deletionVector: DeletionVectorDescriptor,
     tablePath: Option[Path]): RowIndexFilter = {
@@ -133,8 +119,6 @@ class DeltaStandaloneScanTaskCoreImpl(
     }
   }
 }
-
-
 
 /**
  * Implementation of [[RowIndexFilter]] which checks, for a given row index and deletion vector,

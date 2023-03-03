@@ -21,7 +21,8 @@ object ArrowParquetReader {
     filePath: String,
     readSchema: StructType,
     allocator: RootAllocator,
-    filter: RowIndexFilter = null): CloseableIterator[ColumnarRowBatch] = {
+    filter: RowIndexFilter = null // todo: change the default or accomodate for the null
+  ): CloseableIterator[ColumnarRowBatch] = {
 
     val readColumnNames = readSchema.getFields.map(_.getName)
     val options = new ScanOptions(32768, Optional.of(readColumnNames))
@@ -101,7 +102,7 @@ object ArrowParquetReader {
     filePath: String,
     readSchema: StructType,
     allocator: RootAllocator,
-    filter: RowIndexFilter = null
+    filter: RowIndexFilter = null // todo: change the default or accomodate for the null
   ): CloseableIterator[RowRecord] = {
     import io.delta.core.internal.utils.CloseableIteratorScala._
 
