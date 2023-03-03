@@ -43,10 +43,10 @@ class DeltaStandaloneScanTaskCoreImpl(
       }
     }
 
-    val rowsFilter: Option[RowIndexFilter] = if (deletionVector != null) {
-      Some(createInstance(deletionVector, Some(tablePath)))
+    val rowsFilter: RowIndexFilter = if (deletionVector != null) {
+      createInstance(deletionVector, Some(tablePath))
     } else {
-      None
+      new KeepAllRowsFilter
     }
     // if deletionVector is not null read DV and pass to readParquetFile
 
@@ -54,7 +54,7 @@ class DeltaStandaloneScanTaskCoreImpl(
       val parquetReadFields =
         schema.getFields.filterNot(f => filePartitionValues.contains(f.getName))
       val iter = scanHelper.readParquetFile(
-        filePath, new StructType(parquetReadFields), readTimeZone, rowsFilter.getOrElse(null))
+        filePath, new StructType(parquetReadFields), readTimeZone, rowsFilter)
       override def hasNext: Boolean = iter.hasNext
       override def next(): RowBatch = {
         val extendedRows = iter.next().getRows.asScalaCloseable.mapAsCloseable(row =>

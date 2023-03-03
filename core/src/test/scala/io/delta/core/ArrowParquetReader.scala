@@ -10,6 +10,7 @@ import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.ipc.ArrowReader
 import org.scalatest.prop.Configuration
 
+import io.delta.standalone.core.RowIndexFilter
 import io.delta.standalone.data.{ColumnarRowBatch, RowRecord}
 import io.delta.standalone.types.StructType
 import io.delta.standalone.utils.CloseableIterator
@@ -19,7 +20,8 @@ object ArrowParquetReader {
   def readAsColumnarBatches(
     filePath: String,
     readSchema: StructType,
-    allocator: RootAllocator): CloseableIterator[ColumnarRowBatch] = {
+    allocator: RootAllocator,
+    filter: RowIndexFilter = null): CloseableIterator[ColumnarRowBatch] = {
 
     val readColumnNames = readSchema.getFields.map(_.getName)
     val options = new ScanOptions(32768, Optional.of(readColumnNames))
@@ -44,6 +46,7 @@ object ArrowParquetReader {
       reader = scanner.scanBatches()
 
       new CloseableIterator[ColumnarRowBatch] {
+        var rowsRead = 0
         var isNextBatchLoaded = false
         var nextBatch: ArrowColumnarBatch = null
         var closed = false
@@ -55,7 +58,14 @@ object ArrowParquetReader {
             isNextBatchLoaded = reader.loadNextBatch()
             if (isNextBatchLoaded) {
               if (nextBatch != null) { nextBatch.close() }
-              nextBatch = new ArrowColumnarBatch(reader.getVectorSchemaRoot())
+              // need to pass in DV here
+              val root = reader.getVectorSchemaRoot()
+              val numRows = root.getRowCount
+              val deletionVector = new Array[Boolean](numRows)
+              filter.materializeIntoVector(rowsRead, rowsRead + numRows, deletionVector)
+              // alternatively pass (filter, numRows, startIndex) to `ArrowColumnarBatch`
+              nextBatch = new ArrowColumnarBatch(reader.getVectorSchemaRoot(), deletionVector)
+              rowsRead += numRows
             } else {
               close()
             }
@@ -90,11 +100,12 @@ object ArrowParquetReader {
   def readAsRows(
     filePath: String,
     readSchema: StructType,
-    allocator: RootAllocator
+    allocator: RootAllocator,
+    filter: RowIndexFilter = null
   ): CloseableIterator[RowRecord] = {
     import io.delta.core.internal.utils.CloseableIteratorScala._
 
-    readAsColumnarBatches(filePath, readSchema, allocator)
+    readAsColumnarBatches(filePath, readSchema, allocator, filter)
       .asScalaCloseable
       .flatMapAsCloseable { batch =>
         println(s"batch = $batch")

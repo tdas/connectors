@@ -30,12 +30,12 @@ class ArrowScanHelper(val hadoopConf: Configuration) extends DeltaScanHelper {
       timeZone: TimeZone,
       filter: RowIndexFilter
   ): CloseableIterator[ColumnarRowBatch] = {
-    if (filter != null) {
-      val test = new Array[Boolean](10)
-      filter.materializeIntoVector(0, 10, test)
-      println("dv for first 10 rows:" + test.toSeq)
-    }
-    ArrowParquetReader.readAsColumnarBatches(filePath, readSchema, ArrowScanHelper.allocator)
+//    if (filter != null) {
+//      val test = new Array[Boolean](10)
+//      filter.materializeIntoVector(0, 10, test)
+//      println("dv for first 10 rows:" + test.toSeq)
+//    }
+    ArrowParquetReader.readAsColumnarBatches(filePath, readSchema, ArrowScanHelper.allocator, filter)
   }
 
   override def readDeletionVectorFile(filePath: String): DataInputStream = {
@@ -51,6 +51,9 @@ object ArrowScanHelper {
 class DeltaStandaloneWithCoreSuite extends FunSuite {
 
   val resourcePath = new File("../standalone/src/test/resources/delta").getCanonicalFile
+  // version 0 contains 0-9
+  // version 1 removes rows 0 and 9
+  // latest version (1) data = (1, 2, 3, 4, 5, 6, 7, 8)
   val tableDVSmallPath =new File(resourcePath, "table-with-dv-small").getCanonicalPath
 
   test("scan") {
