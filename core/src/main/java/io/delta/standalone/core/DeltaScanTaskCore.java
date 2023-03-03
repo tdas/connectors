@@ -15,4 +15,5 @@ public interface DeltaScanTaskCore extends Serializable {
     StructType getSchema();
 
     Map<String, String> getPartitionValues();
+
 }

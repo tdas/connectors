@@ -11,6 +11,7 @@ import io.delta.flink.source.internal.file.AddFileEnumerator;
 import io.delta.flink.source.internal.state.DeltaEnumeratorStateCheckpointBuilder;
 import io.delta.flink.source.internal.state.DeltaSourceSplit;
 import io.delta.flink.source.internal.utils.SourceUtils;
+import io.delta.standalone.DeltaScan;
 import io.delta.standalone.core.DeltaScanCore;
 import io.delta.standalone.core.DeltaScanHelper;
 import io.delta.standalone.core.DeltaScanTaskCore;
@@ -74,7 +75,8 @@ public class SnapshotProcessor extends TableProcessorBase {
         this.alreadyProcessedPaths = new HashSet<>(alreadyProcessedPaths);
 
         LOG.info("Scott > SnapshotProcessor > using deltaSnapshotCore");
-        this.deltaScanHelper = new SimpleScanHelper(hadoopConf);
+        System.out.println("Scott > SnapshotProcessor > using deltaSnapshotCore");
+        this.deltaScanHelper = new SimpleScanHelper();
         this.deltaSnapshotCore = deltaSnapshotCore;
     }
 
@@ -87,24 +89,37 @@ public class SnapshotProcessor extends TableProcessorBase {
      */
     @Override
     public void process(Consumer<List<DeltaSourceSplit>> processCallback) {
-        final DeltaScanCore deltaScanCore = deltaSnapshotCore.scan(deltaScanHelper);
+        System.out.println("Scott > SnapshotProcessor > process");
+
+//        final DeltaScanCore deltaScanCore = deltaSnapshotCore.scan(deltaScanHelper);
+        final DeltaScan deltaStandaloneScan = snapshot.scan(deltaScanHelper);
+        System.out.println("Scott > SnapshotProcessor > process :: created deltaScanCore");
         final List<DeltaSourceSplit> splits = new ArrayList<>();
 
-        try (CloseableIterator<DeltaScanTaskCore> iter = deltaScanCore.getTasks()) {
-            final DeltaScanTaskCore task = iter.next();
-            LOG.info("Scott > SnapshotProcessor > created task for path {}", task.getFilePath());
-            final Path filePath = new Path(task.getFilePath());
-            final DeltaSourceSplit split = new DeltaSourceSplit(
-                task.getPartitionValues(), // partitionValues
-                UUID.randomUUID().toString(), // id
-                filePath, // filePath
-                0L, // offset
-                0L, // length
-                task);
-            splits.add(split);
-            alreadyProcessedPaths.add(filePath);
+        try (CloseableIterator<DeltaScanTaskCore> iter = deltaStandaloneScan.getTasks()) {
+            System.out.println("Scott > SnapshotProcessor > process :: created iter" + iter);
+            System.out.println("Scott > SnapshotProcessor > process :: iter has next?" +
+                iter.hasNext());
+
+            while (iter.hasNext()) {
+                final DeltaScanTaskCore task = iter.next();
+                System.out.println("Scott > SnapshotProcessor > process :: created task");
+                LOG.info("Scott > SnapshotProcessor > created task for path {}", task.getFilePath());
+                System.out.println("Scott > SnapshotProcessor > created task for path " + task.getFilePath());
+                final Path filePath = new Path(task.getFilePath());
+                final DeltaSourceSplit split = new DeltaSourceSplit(
+                    task.getPartitionValues(), // partitionValues
+                    UUID.randomUUID().toString(), // id
+                    filePath, // filePath
+                    0L, // offset
+                    0L, // length
+                    task);
+                splits.add(split);
+                alreadyProcessedPaths.add(filePath);
+            }
+            System.out.println("Scott > SnapshotProcessor > process :: done with iter");
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Scott > SnapshotProcessor > process :: error", e);
         }
 
 
@@ -118,6 +133,7 @@ public class SnapshotProcessor extends TableProcessorBase {
 //                    snapshot.getAllFiles()),
 //                alreadyProcessedPaths::add);
 
+        System.out.println("Scott > SnapshotProcessor > process :: done " + splits.size());
         processCallback.accept(splits);
     }
 

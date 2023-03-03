@@ -11,13 +11,14 @@ import io.delta.standalone.data.{RowBatch, RowRecord}
 import io.delta.standalone.types._
 import io.delta.standalone.utils.CloseableIterator
 
-
+// scalastyle:off println
 class DeltaScanTaskCoreImpl(
     filePath: String,
     filePartitionValues: Map[String, String],
     schema: StructType,
     readTimeZone: TimeZone,
     scanHelper: DeltaScanHelper) extends DeltaScanTaskCore {
+  println(s"Scott > created DeltaScanTaskCoreImpl $filePath \n${schema.getTreeString}")
   override def getFilePath: String = filePath
 
   override def getSchema: StructType = schema
@@ -25,6 +26,8 @@ class DeltaScanTaskCoreImpl(
   override def getPartitionValues: util.Map[String, String] = filePartitionValues.asJava
 
   override def getDataAsRows(): CloseableIterator[RowBatch] = {
+    println(s"Scott > DeltaScanTaskCoreImpl > getDataAsRows for $filePath")
+
     var decodedPartitionValues: Map[String, Any] = Map()
 
     if (null != filePartitionValues) {
@@ -48,6 +51,7 @@ class DeltaScanTaskCoreImpl(
         schema.getFields.filterNot(f => filePartitionValues.contains(f.getName))
       val iter = scanHelper.readParquetFile(
         filePath, new StructType(parquetReadFields), readTimeZone)
+      println(s"Scott > DeltaScanTaskCoreImpl > getDataAsRows > created parquetFileIter")
       override def hasNext: Boolean = iter.hasNext
       override def next(): RowBatch = {
         val extendedRows = iter.next().getRows.asScalaCloseable.mapAsCloseable(row =>

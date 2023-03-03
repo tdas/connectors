@@ -19,10 +19,13 @@ import io.delta.standalone.types.StructType
 import io.delta.standalone.utils.CloseableIterator
 import io.delta.storage.{LocalLogStore, LogStore}
 
+// scalastyle:off println
 class SimpleLogReplayHelper(
     val logStore: LogStore,
     val hadoopConf: Configuration) extends LogReplayHelper {
   def this(hadoopConf: Configuration) = this(new LocalLogStore(hadoopConf), hadoopConf)
+
+  println("Scott > Created SimpleLogReplayHelper")
 
   val allocator = new RootAllocator
 

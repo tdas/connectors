@@ -55,11 +55,11 @@ public class BoundedSplitEnumeratorProvider implements SplitEnumeratorProvider {
             SplitEnumeratorContext<DeltaSourceSplit> enumContext,
             DeltaConnectorConfiguration sourceConfiguration) {
 
-        final String logPath = SourceUtils.pathToString(deltaTablePath) + "/_delta_log";
-        final LogReplayHelper logReplayHelper = new SimpleLogReplayHelper(configuration);
-
-        DeltaLogCore deltaLogCore = new DeltaLogCoreImpl(logPath, logReplayHelper);
-        DeltaSnapshotCore deltaSnapshotCore = deltaLogCore.getLatestSnapshot();
+//        final String logPath = SourceUtils.pathToString(deltaTablePath) + "/_delta_log";
+//        final LogReplayHelper logReplayHelper = new SimpleLogReplayHelper(configuration);
+//
+//        DeltaLogCore deltaLogCore = new DeltaLogCoreImpl(logPath, logReplayHelper);
+//        DeltaSnapshotCore deltaSnapshotCore = deltaLogCore.getLatestSnapshot();
 
         DeltaLog deltaLog =
             DeltaLog.forTable(configuration, SourceUtils.pathToString(deltaTablePath));
@@ -72,7 +72,7 @@ public class BoundedSplitEnumeratorProvider implements SplitEnumeratorProvider {
 
         SnapshotProcessor snapshotProcessor =
             new SnapshotProcessor(deltaTablePath, initSnapshot,
-                fileEnumeratorProvider.create(), Collections.emptySet(), deltaSnapshotCore, configuration);
+                fileEnumeratorProvider.create(), Collections.emptySet(), null /* deltaSnapshotCore */, configuration);
 
         return new BoundedDeltaSourceSplitEnumerator(
             deltaTablePath, snapshotProcessor, splitAssignerProvider.create(emptyList()),

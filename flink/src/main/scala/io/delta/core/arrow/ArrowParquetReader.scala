@@ -19,6 +19,7 @@ object ArrowParquetReader {
     filePath: String,
     readSchema: StructType,
     allocator: RootAllocator): CloseableIterator[ColumnarRowBatch] = {
+    println("Scott > ArrowParquetReader > readAsColumnarBatches")
 
     val readColumnNames = readSchema.getFields.map(_.getName)
     val options = new ScanOptions(32768, Optional.of(readColumnNames))
