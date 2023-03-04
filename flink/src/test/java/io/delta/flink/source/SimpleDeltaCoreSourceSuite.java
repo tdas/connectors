@@ -30,7 +30,7 @@ public class SimpleDeltaCoreSourceSuite extends TestLogger {
         DeltaSource<RowData> source = DeltaSource.forBoundedRowData(path, hadoopConf).build();
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(4);
+        env.setParallelism(1);
         env.setRuntimeMode(RuntimeExecutionMode.AUTOMATIC);
         env.setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 1000));
 

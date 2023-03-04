@@ -6,9 +6,9 @@ import java.util
 import io.delta.standalone.data.{ColumnarRowBatch, ColumnVector, RowRecord}
 import io.delta.standalone.types.StructType
 
-
+// reference to a ROW in a table by using the index
 class ColumnarBatchRow(
-    columnarBatch: ColumnarRowBatch,
+    columnarBatch: ColumnarRowBatch, // the actual data in the table
     rowId: Int
   ) extends RowRecord {
   /**
