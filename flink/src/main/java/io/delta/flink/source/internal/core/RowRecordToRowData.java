@@ -24,6 +24,9 @@ public class RowRecordToRowData implements RowData {
     }
 
     private String posToFieldName(int pos) {
+        System.out.println(
+            String.format("Scott > RowRecordToRowData > posToFieldName pos %s length %s", pos, schemaFields.length)
+        );
         if (pos >= schemaFields.length) {
             throw new RuntimeException(
                 String.format("Index %s is out of bounds. Schema length: %s", pos, schemaFields.length)

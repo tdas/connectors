@@ -12,6 +12,7 @@ import io.delta.standalone.types._
  * @param schema          the intended schema for this record
  * @param partitionValues the deserialized partition values of current record
  */
+// scalastyle:off println
 case class CombinedRowRecord(
   innerRow: RowRecord,
   schema: StructType,
@@ -27,9 +28,11 @@ case class CombinedRowRecord(
   override def getLength: Int = innerRow.getLength + partitionValues.size
 
   override def isNullAt(fieldName: String): Boolean = {
+    println(s"Scott > CombinedRowRecord > isNullAt $fieldName")
     if (partitionValues.contains(fieldName)) { // is partition field
       partitionValues(fieldName) == null
     } else {
+      println(s"Scott > CombinedRowRecord > isNullAt >> calling innerRow")
       innerRow.isNullAt(fieldName)
     }
   }
