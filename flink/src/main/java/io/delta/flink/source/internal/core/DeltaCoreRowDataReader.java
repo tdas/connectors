@@ -82,13 +82,13 @@ public class DeltaCoreRowDataReader implements BulkFormat.Reader<RowData> {
                     return null;
                 }
 
-                System.out.println("Scott > DeltaCoreRowDataReader > recordsIterForCurrentRowBatch has next");
                 RowRecord rowRecord = recordsIterForCurrentRowBatch.next();
+                System.out.println("Scott > DeltaCoreRowDataReader > recordsIterForCurrentRowBatch has next " + rowRecord);
                 RowData rowData = new RowRecordToRowData(rowRecord, deltaScanTaskCore.getSchema());
                 numRecords++;
 
                 // TODO: MutableRecordAndPosition
-                return new RecordAndPosition<>(rowData, NO_OFFSET /* offset */, numRecords /* recordSkipCount */);
+                return new RecordAndPosition<>(rowData, NO_OFFSET /* offset */, numRecords + 1/* recordSkipCount */);
             }
 
             @Override
