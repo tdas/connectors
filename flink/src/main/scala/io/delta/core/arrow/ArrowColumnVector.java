@@ -3,6 +3,7 @@ package io.delta.core.arrow;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import io.delta.standalone.data.ColumnVector;
 import io.delta.standalone.data.ColumnarStruct;
@@ -53,11 +54,16 @@ class ArrowColumnVector implements ColumnVector {
             }
             childFieldVectors = null;
         }
+        System.out.println(accessor.hash + " -- Scott > accessor CLOSED");
         accessor.close();
     }
 
     @Override
     public boolean isNullAt(int rowId) {
+        System.out.println("Scott > ArrowColumnVector > isNullAt rowId " + rowId);
+        System.out.println("Scott > ArrowColumnVector > isNullAt childFieldNames " + (childFieldNames == null ? "null" : String.join(",", childFieldNames)));
+        System.out.println("Scott > ArrowColumnVector > isNullAt accessor " + accessor.toString());
+        System.out.println("Scott > ArrowColumnVector > isNullAt DataType " + type.getSimpleString());
         return accessor.isNullAt(rowId);
     }
 
@@ -188,12 +194,17 @@ class ArrowColumnVector implements ColumnVector {
     abstract static class ArrowVectorAccessor {
 
         final ValueVector vector;
+        public final long hash;
 
         ArrowVectorAccessor(ValueVector vector) {
             this.vector = vector;
+            this.hash = hashCode() % 1000;
+            System.out.println(hash + " -- Scott > ArrowVectorAccess created :: vector " + vector.toString());
         }
 
         final boolean isNullAt(int rowId) {
+            System.out.println(hash + " -- Scott > ArrowVectorAccessor > isNullAt " + rowId);
+            System.out.println(hash + " -- Scott > ArrowVectorAccessor > isNullAt > vector " + vector.toString());
             return vector.isNull(rowId);
         }
 
@@ -202,6 +213,7 @@ class ArrowColumnVector implements ColumnVector {
         }
 
         final void close() {
+            System.out.println(hash + " -- Scott > accessor closed");
             vector.close();
         }
 
