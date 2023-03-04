@@ -18,7 +18,13 @@ import org.junit.Test;
 public class SimpleDeltaCoreSourceSuite extends TestLogger {
     @Test
     public void test00() throws Exception {
-        // first, locally write to /tmp/
+        /*
+        path = "/tmp/delta_core_flink_test_tables/table_000"
+        for i in range(8):
+            low = i*100
+            high = low+100
+            spark.range(low, high).write.format("delta").mode("append").save(path)
+         */
         final Configuration hadoopConf = new Configuration();
         final Path path = Path.fromLocalFile(new File("/tmp/delta_core_flink_test_tables/table_000"));
         DeltaSource<RowData> source = DeltaSource.forBoundedRowData(path, hadoopConf).build();
