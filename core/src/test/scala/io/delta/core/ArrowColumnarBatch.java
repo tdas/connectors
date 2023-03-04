@@ -17,13 +17,12 @@ import org.apache.arrow.vector.VectorSchemaRoot;
 class ArrowColumnarBatch implements ColumnarRowBatch {
 
     private VectorSchemaRoot vectorSchemaRoot;
-    private int numRows; // this is rows in the physical files, doesn't include filtered out DVs
+    private int numRows;
     private List<ArrowColumnVector> fieldVectors;
     private List<String> fieldNames;
     private StructType schema;
-    private boolean[] deletionVector;
 
-    public ArrowColumnarBatch(VectorSchemaRoot root, boolean[] deletionVector)
+    public ArrowColumnarBatch(VectorSchemaRoot root)
     {
         this(
             root,
@@ -36,8 +35,7 @@ class ArrowColumnarBatch implements ColumnarRowBatch {
                 .map(field -> field.getName())
                 .collect(Collectors.toList()),
             root.getRowCount(),
-            ArrowUtils.fromArrowSchema(root.getSchema()),
-            deletionVector
+            ArrowUtils.fromArrowSchema(root.getSchema())
         );
     }
 
@@ -46,14 +44,12 @@ class ArrowColumnarBatch implements ColumnarRowBatch {
         List<ArrowColumnVector> fieldVectors,
         List<String> fieldNames,
         int numRows,
-        StructType schema,
-        boolean[] deletionVector) {
+        StructType schema) {
         this.vectorSchemaRoot = vectorSchemaRoot;
         this.fieldVectors = fieldVectors;
         this.fieldNames = fieldNames;
         this.numRows = numRows;
         this.schema = schema;
-        this.deletionVector = deletionVector;
     }
 
     @Override
@@ -85,42 +81,6 @@ class ArrowColumnarBatch implements ColumnarRowBatch {
     @Override
     public void close() {
         vectorSchemaRoot.close();
-    }
-
-    public CloseableIterator<RowRecord> getRows() {
-
-        ColumnarRowBatch batch = this;
-
-        return new CloseableIterator<RowRecord>() {
-
-            int rowId = 0;
-            int maxRowId = getNumRows();
-
-            @Override
-            public boolean hasNext() {
-                // todo: double check this logic
-                if (rowId == maxRowId) {
-                    return false;
-                } else if (!deletionVector[rowId]) {
-                    return true;
-                } else {
-                    while (rowId < maxRowId && deletionVector[rowId]) {
-                        rowId += 1;
-                    }
-                    return hasNext();
-                }
-            }
-
-            @Override
-            public RowRecord next() {
-                RowRecord row = new ColumnarBatchRow(batch, rowId);
-                rowId += 1;
-                return row;
-            }
-
-            @Override
-            public void close() throws IOException { }
-        };
     }
 }
 
