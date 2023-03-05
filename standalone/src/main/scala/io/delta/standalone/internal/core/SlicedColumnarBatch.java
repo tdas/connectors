@@ -1,4 +1,4 @@
-package io.delta.core;
+package io.delta.standalone.internal.core;
 
 import java.io.IOException;
 

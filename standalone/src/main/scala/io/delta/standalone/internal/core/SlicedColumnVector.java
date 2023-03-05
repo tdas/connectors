@@ -1,4 +1,4 @@
-package io.delta.core;
+package io.delta.standalone.internal.core;
 
 import io.delta.standalone.data.ColumnVector;
 import io.delta.standalone.data.ColumnarStruct;

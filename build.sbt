@@ -785,6 +785,13 @@ lazy val flink = (project in file("flink"))
       "org.junit.jupiter" % "junit-jupiter-params" % "5.8.2" % "test",
       "io.github.artsok" % "rerunner-jupiter" % "2.1.6" % "test",
 
+      // For delta-standalone, double adding
+      "org.apache.arrow" % "arrow-dataset" % "11.0.0",
+      "org.apache.arrow" % "arrow-memory-unsafe" % arrowVersion excludeAll (
+        ExclusionRule("com.fasterxml.jackson.core"),
+        ExclusionRule("com.fasterxml.jackson.module")
+      ),
+
       // Compiler plugins
       // -- Bump up the genjavadoc version explicitly to 0.18 to work with Scala 2.12
       compilerPlugin("com.typesafe.genjavadoc" %% "genjavadoc-plugin" % "0.18" cross CrossVersion.full)

@@ -189,9 +189,9 @@ class DeltaScanImpl(
 
       override def next(): DeltaScanTaskCore = {
         val addFile = iter.next()
-        println("Add file path: " + addFile.path)
+        // println("Add file path: " + addFile.path)
         val tablePath = replay.snapshot.deltaLog.dataPath
-        println("Table path: " + tablePath)
+        // println("Table path: " + tablePath)
         new DeltaStandaloneScanTaskCoreImpl(
           tablePath,
           FileNames.absolutePath(tablePath, addFile.path).toString,
