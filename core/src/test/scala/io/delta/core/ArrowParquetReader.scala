@@ -8,7 +8,6 @@ import org.apache.arrow.dataset.scanner.{Scanner, ScanOptions}
 import org.apache.arrow.dataset.source.{Dataset, DatasetFactory}
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.ipc.ArrowReader
-import org.scalatest.prop.Configuration
 
 import io.delta.standalone.core.RowIndexFilter
 import io.delta.standalone.data.{ColumnarRowBatch, RowRecord}

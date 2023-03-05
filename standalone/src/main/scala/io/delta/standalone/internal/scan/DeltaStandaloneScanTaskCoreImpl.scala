@@ -1,17 +1,20 @@
 package io.delta.core.internal
 
 import java.io.DataInputStream
+import java.util
 import java.util.TimeZone
+
+import scala.collection.JavaConverters._
 
 import org.apache.hadoop.fs.Path
 
 import io.delta.core.internal.utils.CloseableIteratorScala._
 import io.delta.standalone.core.{DeltaScanHelper, DeltaScanTaskCore, RowIndexFilter}
 import io.delta.standalone.data.{RowBatch, RowRecord}
+import io.delta.standalone.internal.actions.DeletionVectorDescriptor
 import io.delta.standalone.internal.deletionvectors.{RoaringBitmapArray, StoredDeletionVector}
 import io.delta.standalone.types._
 import io.delta.standalone.utils.CloseableIterator
-import io.delta.standalone.internal.actions.DeletionVectorDescriptor
 
 class DeltaStandaloneScanTaskCoreImpl(
   tablePath: Path,
@@ -22,6 +25,11 @@ class DeltaStandaloneScanTaskCoreImpl(
   readTimeZone: TimeZone,
   scanHelper: DeltaScanHelper) extends DeltaScanTaskCore {
 
+  override def getFilePath: String = filePath
+
+  override def getSchema: StructType = schema
+
+  override def getPartitionValues: util.Map[String, String] = filePartitionValues.asJava
 
   override def getDataAsRows(): CloseableIterator[RowBatch] = {
     var decodedPartitionValues: Map[String, Any] = Map()

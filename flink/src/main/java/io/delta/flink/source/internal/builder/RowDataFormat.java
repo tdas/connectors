@@ -2,8 +2,11 @@ package io.delta.flink.source.internal.builder;
 
 import java.io.IOException;
 
+import io.delta.flink.source.internal.core.DeltaCoreRowDataReader;
 import io.delta.flink.source.internal.state.DeltaSourceSplit;
+import javax.annotation.Nullable;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.connector.file.src.reader.BulkFormat;
 import org.apache.flink.formats.parquet.ParquetColumnarRowInputFormat;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.types.logical.RowType;
@@ -28,8 +31,9 @@ public class RowDataFormat implements DeltaBulkFormat<RowData> {
     public Reader<RowData> createReader(
             org.apache.flink.configuration.Configuration configuration,
             DeltaSourceSplit deltaSourceSplit) throws IOException {
-
-        return this.decoratedInputFormat.createReader(configuration, deltaSourceSplit);
+        // System.out.println("Scott > RowDataFormat :: createReader, split " + deltaSourceSplit.path());
+        return new DeltaCoreRowDataReader(deltaSourceSplit.deltaScanTaskCore);
+//        return this.decoratedInputFormat.createReader(configuration, deltaSourceSplit);
     }
 
     @Override

@@ -1,10 +1,10 @@
 package io.delta.flink.source.internal.state;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.Map;
 
+import io.delta.core.internal.DeltaStandaloneScanTaskCoreImpl;
+import io.delta.standalone.core.DeltaScanTaskCore;
 import org.apache.flink.api.common.typeutils.base.MapSerializer;
 import org.apache.flink.api.common.typeutils.base.StringSerializer;
 import org.apache.flink.api.connector.source.SourceReader;
@@ -106,7 +106,20 @@ public final class DeltaSourceSplitSerializer
                 FileSourceSplitSerializer.INSTANCE.getVersion(), superBytes);
 
         Map<String, String> partitionValues = partitionSerDe.deserialize(inputWrapper);
+        ObjectInputStream in = new ObjectInputStream(inputWrapper);
 
+        DeltaScanTaskCore scanTaskCore;
+        try {
+            scanTaskCore = (DeltaStandaloneScanTaskCoreImpl) in.readObject();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Scott > failed to deserialize scanTaskScore", e);
+        }
+
+        // System.out.println("Scott > DeltaSourceSplitSerializer > deserializeV1");
+//        ObjectInputStream in = new ObjectInputStream(fileIn);
+//        e = (Employee) in.readObject();
+//        DeltaScanTaskCore scanTaskCore =
         return new DeltaSourceSplit(
             partitionValues,
             superSplit.splitId(),
@@ -114,7 +127,8 @@ public final class DeltaSourceSplitSerializer
             superSplit.offset(),
             superSplit.length(),
             superSplit.hostnames(),
-            superSplit.getReaderPosition().orElse(null)
+            superSplit.getReaderPosition().orElse(null),
+            scanTaskCore
         );
     }
 
@@ -134,5 +148,11 @@ public final class DeltaSourceSplitSerializer
         outputWrapper.writeInt(superBytes.length);
         outputWrapper.write(superBytes);
         partitionSerDe.serialize(split.getPartitionValues(), outputWrapper);
+
+        ObjectOutputStream stream = new ObjectOutputStream(outputWrapper);
+        // System.out.println("Scott > trying to serialize split.deltaScanTaskCore " + split.path());
+        stream.writeObject(split.deltaScanTaskCore);
+        // System.out.println("Scott > serialized split.deltaScanTaskCore " + split.path());
+//        outputWrapper.close(); ???
     }
 }

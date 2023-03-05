@@ -38,6 +38,7 @@
 
 package io.delta.standalone.types;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,7 +48,7 @@ import java.util.stream.Collectors;
 /**
  * The metadata for a given {@link StructField}.
  */
-public final class FieldMetadata {
+public final class FieldMetadata implements Serializable {
     private final Map<String, Object> metadata;
 
     private FieldMetadata(Map<String, Object> metadata) {

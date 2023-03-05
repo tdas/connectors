@@ -1,4 +1,4 @@
-package io.delta.core;
+package io.delta.standalone.internal.core;
 
 
 import java.math.BigDecimal;
@@ -37,7 +37,6 @@ class ArrowColumnVector implements ColumnVector {
     public ArrowColumnVector(ValueVector vector) {
         this.type = ArrowUtils.fromArrowField(vector.getField());
         initAccessor(vector);
-        System.out.println("" + vector.getName() + " -> " + accessor.getClass().getSimpleName());
     }
 
     @Override
@@ -54,6 +53,7 @@ class ArrowColumnVector implements ColumnVector {
             }
             childFieldVectors = null;
         }
+        System.out.println(accessor.hash + " -- Scott > ArrowColumnVector > accessor CLOSED");
         accessor.close();
     }
 
@@ -188,10 +188,12 @@ class ArrowColumnVector implements ColumnVector {
 
     abstract static class ArrowVectorAccessor {
 
-        final ValueVector vector;
+        final public ValueVector vector;
+        public final long hash;
 
         ArrowVectorAccessor(ValueVector vector) {
             this.vector = vector;
+            this.hash = hashCode() % 1000;
         }
 
         final boolean isNullAt(int rowId) {

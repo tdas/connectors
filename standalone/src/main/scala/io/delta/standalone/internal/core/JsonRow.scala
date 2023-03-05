@@ -1,16 +1,16 @@
-package io.delta.core
+package io.delta.standalone.internal.core
 
 import java.sql.{Date, Timestamp}
-import java.util
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
+import java.util
 
 import io.delta.standalone.data.RowRecord
-import io.delta.standalone.types.{DataType, StructType}
+import io.delta.standalone.types.StructType
 
 class JsonRow(rootNode: ObjectNode) extends RowRecord {
   override def getSchema: StructType = {
@@ -55,7 +55,7 @@ class JsonRow(rootNode: ObjectNode) extends RowRecord {
     val keyValuePairs = objectNode.fields().asScala.map { entry =>
       entry.getKey -> getValue(entry.getValue)
     }
-    if (keyValuePairs.isEmpty) return Map.empty[K, V].asJava
+    if (keyValuePairs.isEmpty) return Map.empty[K, V].asJava // Map.of didn't compile :shrug:
     keyValuePairs.toMap.asJava.asInstanceOf[util.Map[K, V]]
   }
 
