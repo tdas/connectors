@@ -35,8 +35,6 @@ public class RowRecordToRowData implements RowData, Serializable {
         for (int i = 0; i < schemaFields.length; i++) {
             StructField field = schemaFields[i];
             values[i] = getAsObject(row, field.getName(), field.getDataType());
-            System.out.println("" + field.getName() + ": " +
-                field.getDataType().getTypeName() + " = " + values[i]);
         }
     }
 

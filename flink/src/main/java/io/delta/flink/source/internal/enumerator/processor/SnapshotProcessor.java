@@ -4,26 +4,21 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 
-import io.delta.core.SimpleScanHelper;
-import io.delta.flink.sink.internal.committer.DeltaCommitter;
-import io.delta.flink.source.internal.enumerator.monitor.ChangesPerVersion;
 import io.delta.flink.source.internal.file.AddFileEnumerator;
 import io.delta.flink.source.internal.state.DeltaEnumeratorStateCheckpointBuilder;
 import io.delta.flink.source.internal.state.DeltaSourceSplit;
-import io.delta.flink.source.internal.utils.SourceUtils;
-import io.delta.standalone.DeltaScan;
-import io.delta.standalone.core.DeltaScanCore;
 import io.delta.standalone.core.DeltaScanHelper;
 import io.delta.standalone.core.DeltaScanTaskCore;
 import io.delta.standalone.core.DeltaSnapshotCore;
 import io.delta.standalone.utils.CloseableIterator;
 import org.apache.flink.core.fs.Path;
-
-import io.delta.standalone.Snapshot;
-import io.delta.standalone.actions.AddFile;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.delta.standalone.DeltaScan;
+import io.delta.standalone.Snapshot;
+import io.delta.standalone.actions.AddFile;
 
 /**
  * This implementation of {@link TableProcessor} process data from Delta table {@link Snapshot}.
@@ -48,8 +43,6 @@ public class SnapshotProcessor extends TableProcessorBase {
 
     private final DeltaSnapshotCore deltaSnapshotCore;
 
-    private final DeltaScanHelper deltaScanHelper;
-
     public SnapshotProcessor(
             Path deltaTablePath,
             Snapshot snapshot,
@@ -59,7 +52,6 @@ public class SnapshotProcessor extends TableProcessorBase {
         this.snapshot = snapshot;
         this.alreadyProcessedPaths = new HashSet<>(alreadyProcessedPaths);
         this.deltaSnapshotCore = null;
-        this.deltaScanHelper = null;
         throw new RuntimeException("Scott > SnapshotProcessor > not using deltaSnapshotCore");
     }
 
@@ -76,7 +68,6 @@ public class SnapshotProcessor extends TableProcessorBase {
 
         // LOG.info("Scott > SnapshotProcessor > using deltaSnapshotCore");
         // System.out.println("Scott > SnapshotProcessor > using deltaSnapshotCore");
-        this.deltaScanHelper = new SimpleScanHelper();
         this.deltaSnapshotCore = deltaSnapshotCore;
     }
 
@@ -92,7 +83,7 @@ public class SnapshotProcessor extends TableProcessorBase {
         // System.out.println("Scott > SnapshotProcessor > process");
 
 //        final DeltaScanCore deltaScanCore = deltaSnapshotCore.scan(deltaScanHelper);
-        final DeltaScan deltaStandaloneScan = snapshot.scan(deltaScanHelper);
+        final DeltaScan deltaStandaloneScan = snapshot.scan();
         // System.out.println("Scott > SnapshotProcessor > process :: created deltaScanCore");
         final List<DeltaSourceSplit> splits = new ArrayList<>();
 

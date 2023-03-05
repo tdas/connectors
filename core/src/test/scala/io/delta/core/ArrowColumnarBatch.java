@@ -5,10 +5,9 @@ import java.util.stream.Collectors;
 
 import io.delta.standalone.data.ColumnVector;
 import io.delta.standalone.data.ColumnarRowBatch;
-import io.delta.standalone.data.RowRecord;
 import io.delta.standalone.types.DataType;
 import io.delta.standalone.types.StructType;
-import io.delta.standalone.utils.CloseableIterator;
+
 import org.apache.arrow.vector.VectorSchemaRoot;
 
 class ArrowColumnarBatch implements ColumnarRowBatch {
