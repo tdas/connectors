@@ -791,6 +791,8 @@ lazy val flink = (project in file("flink"))
         ExclusionRule("com.fasterxml.jackson.core"),
         ExclusionRule("com.fasterxml.jackson.module")
       ),
+      "org.roaringbitmap" % "RoaringBitmap" % "0.9.25",
+      "com.google.guava" % "guava" % "16.0.1",
 
       // Compiler plugins
       // -- Bump up the genjavadoc version explicitly to 0.18 to work with Scala 2.12
