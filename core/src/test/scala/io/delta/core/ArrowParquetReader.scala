@@ -21,7 +21,7 @@ object ArrowParquetReader {
     filePath: String,
     readSchema: StructType,
     allocator: RootAllocator,
-    filter: RowIndexFilter = null // todo: change the default or accomodate for the null
+    filter: RowIndexFilter = null
   ): CloseableIterator[ColumnarRowBatch] = {
 
     // we can't flatMap the iterators because we need to track the number of seen rows in the file
@@ -38,6 +38,7 @@ object ArrowParquetReader {
       //   - (logical) currentBatchIter is either null or !currentBatchIter.hasNext
       // note: currentBatchIter's base batch is closed automatically in the arrowBatchIter.hasNext
       private def updateCurrent: Unit = {
+//        if (currentBatchIter != null) currentBatchIter.close()
         val nextBatch = arrowBatchIter.next()
         currentBatchIter = readAsSlicedBatches(nextBatch, physicalRowsRead, filter)
         physicalRowsRead += nextBatch.getNumRows
@@ -106,7 +107,7 @@ object ArrowParquetReader {
           if (!isNextBatchLoaded) {
             isNextBatchLoaded = reader.loadNextBatch()
             if (isNextBatchLoaded) {
-              if (nextBatch != null) { nextBatch.close() }
+//              if (nextBatch != null) { nextBatch.close() }
               nextBatch = new ArrowColumnarBatch(reader.getVectorSchemaRoot())
             } else {
               close()
@@ -142,10 +143,17 @@ object ArrowParquetReader {
   private def readAsSlicedBatches(
     baseBatch: ColumnarRowBatch,
     fileOffset: Int,
-    filter: RowIndexFilter = null) : CloseableIterator[SlicedColumnarBatch] = {
+    filter: RowIndexFilter) : CloseableIterator[SlicedColumnarBatch] = {
     val numRows = baseBatch.getNumRows
     val deletionVector = new Array[Boolean](numRows)
-    filter.materializeIntoVector(fileOffset, fileOffset + numRows, deletionVector)
+    if (filter != null) {
+      filter.materializeIntoVector(fileOffset, fileOffset + numRows, deletionVector)
+    } else {
+      // todo: for now since we can't access KeepAllRowsFilter here in core
+      //   in the future we can update the default argument for filter to be KeepAllRowsFilter
+      //   instead of null
+      Seq(0, numRows).foreach(deletionVector(_) = false)
+    }
 
     new CloseableIterator[SlicedColumnarBatch] {
 
@@ -200,7 +208,7 @@ object ArrowParquetReader {
     filePath: String,
     readSchema: StructType,
     allocator: RootAllocator,
-    filter: RowIndexFilter = null // todo: change the default or accomodate for the null
+    filter: RowIndexFilter = null
   ): CloseableIterator[RowRecord] = {
     import io.delta.core.internal.utils.CloseableIteratorScala._
 

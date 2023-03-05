@@ -79,7 +79,7 @@ class ArrowColumnarBatch implements ColumnarRowBatch {
 
     @Override
     public void close() {
-        // vectorSchemaRoot.close();
+         vectorSchemaRoot.close();
         // todo: this is causing
         //  java.lang.IndexOutOfBoundsException: index: 0, length: 1 (expected: range(0, 0))
         //  when the arrow batch size is small enough to have multiple batches (for example, 8)

@@ -106,16 +106,16 @@ class DeltaStandaloneScanTaskCoreImpl(
       new DeletedRowsMarkingFilter(bitmap)
     }
   }
+}
 
-  private class KeepAllRowsFilter extends RowIndexFilter {
-    override def materializeIntoVector(
-      start: Long, end: Long, batch: Array[Boolean]): Unit = {
-      val batchSize = (end - start).toInt
-      var rowId = 0
-      while (rowId < batchSize) {
-        batch(rowId) = false
-        rowId += 1
-      }
+final class KeepAllRowsFilter extends RowIndexFilter {
+  override def materializeIntoVector(
+    start: Long, end: Long, batch: Array[Boolean]): Unit = {
+    val batchSize = (end - start).toInt
+    var rowId = 0
+    while (rowId < batchSize) {
+      batch(rowId) = false
+      rowId += 1
     }
   }
 }
