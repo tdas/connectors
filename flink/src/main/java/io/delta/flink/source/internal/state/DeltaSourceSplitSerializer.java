@@ -5,6 +5,7 @@ import java.util.Map;
 
 import io.delta.core.internal.DeltaScanTaskCoreImpl;
 import io.delta.standalone.core.DeltaScanTaskCore;
+import io.delta.standalone.internal.scan.DeltaStandaloneScanTaskCoreImpl;
 import org.apache.flink.api.common.typeutils.base.MapSerializer;
 import org.apache.flink.api.common.typeutils.base.StringSerializer;
 import org.apache.flink.api.connector.source.SourceReader;
@@ -110,7 +111,7 @@ public final class DeltaSourceSplitSerializer
 
         DeltaScanTaskCore scanTaskCore;
         try {
-            scanTaskCore = (DeltaScanTaskCoreImpl) in.readObject();
+            scanTaskCore = (DeltaStandaloneScanTaskCoreImpl) in.readObject();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
             throw new RuntimeException("Scott > failed to deserialize scanTaskScore", e);
