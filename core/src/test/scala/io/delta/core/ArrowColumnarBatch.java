@@ -1,11 +1,8 @@
 package io.delta.core;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import io.delta.core.internal.ColumnarBatchRow;
-import io.delta.standalone.core.RowIndexFilter;
 import io.delta.standalone.data.ColumnVector;
 import io.delta.standalone.data.ColumnarRowBatch;
 import io.delta.standalone.data.RowRecord;
@@ -21,6 +18,8 @@ class ArrowColumnarBatch implements ColumnarRowBatch {
     private List<ArrowColumnVector> fieldVectors;
     private List<String> fieldNames;
     private StructType schema;
+
+
 
     public ArrowColumnarBatch(VectorSchemaRoot root)
     {
@@ -80,7 +79,10 @@ class ArrowColumnarBatch implements ColumnarRowBatch {
 
     @Override
     public void close() {
-        vectorSchemaRoot.close();
+        // vectorSchemaRoot.close();
+        // todo: this is causing
+        //  java.lang.IndexOutOfBoundsException: index: 0, length: 1 (expected: range(0, 0))
+        //  when the arrow batch size is small enough to have multiple batches (for example, 8)
     }
 }
 

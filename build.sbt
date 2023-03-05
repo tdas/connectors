@@ -66,6 +66,7 @@ lazy val commonSettings = Seq(
   scalaVersion := scala212,
   crossScalaVersions := Seq(scala213, scala212, scala211),
   fork := true,
+  testOptions in Test += Tests.Argument("-oF"),
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
   scalacOptions ++= Seq("-target:jvm-1.8", scalacWarningUnusedImport(scalaVersion.value) ),
   // Configurations to speed up tests and reduce memory footprint

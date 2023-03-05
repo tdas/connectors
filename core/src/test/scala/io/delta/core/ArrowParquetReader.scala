@@ -71,6 +71,9 @@ object ArrowParquetReader {
   ): CloseableIterator[ColumnarRowBatch] = {
 
     val readColumnNames = readSchema.getFields.map(_.getName)
+    // testing with multiple arrow batches
+    // val options = new ScanOptions(8, Optional.of(readColumnNames))
+    // see ArrowColumnarBatch::close; we close a shared resource somewhere here in this scenario
     val options = new ScanOptions(32768, Optional.of(readColumnNames))
 
     var datasetFactory: DatasetFactory = null
