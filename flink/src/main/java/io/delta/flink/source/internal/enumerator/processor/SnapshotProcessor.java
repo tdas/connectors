@@ -74,8 +74,8 @@ public class SnapshotProcessor extends TableProcessorBase {
         this.snapshot = snapshot;
         this.alreadyProcessedPaths = new HashSet<>(alreadyProcessedPaths);
 
-        LOG.info("Scott > SnapshotProcessor > using deltaSnapshotCore");
-        System.out.println("Scott > SnapshotProcessor > using deltaSnapshotCore");
+        // LOG.info("Scott > SnapshotProcessor > using deltaSnapshotCore");
+        // System.out.println("Scott > SnapshotProcessor > using deltaSnapshotCore");
         this.deltaScanHelper = new SimpleScanHelper();
         this.deltaSnapshotCore = deltaSnapshotCore;
     }
@@ -89,23 +89,22 @@ public class SnapshotProcessor extends TableProcessorBase {
      */
     @Override
     public void process(Consumer<List<DeltaSourceSplit>> processCallback) {
-        System.out.println("Scott > SnapshotProcessor > process");
+        // System.out.println("Scott > SnapshotProcessor > process");
 
 //        final DeltaScanCore deltaScanCore = deltaSnapshotCore.scan(deltaScanHelper);
         final DeltaScan deltaStandaloneScan = snapshot.scan(deltaScanHelper);
-        System.out.println("Scott > SnapshotProcessor > process :: created deltaScanCore");
+        // System.out.println("Scott > SnapshotProcessor > process :: created deltaScanCore");
         final List<DeltaSourceSplit> splits = new ArrayList<>();
 
         try (CloseableIterator<DeltaScanTaskCore> iter = deltaStandaloneScan.getTasks()) {
-            System.out.println("Scott > SnapshotProcessor > process :: created iter" + iter);
-            System.out.println("Scott > SnapshotProcessor > process :: iter has next?" +
-                iter.hasNext());
+            // System.out.println("Scott > SnapshotProcessor > process :: created iter" + iter);
+            // System.out.println("Scott > SnapshotProcessor > process :: iter has next?" + iter.hasNext());
 
             while (iter.hasNext()) {
                 final DeltaScanTaskCore task = iter.next();
-                System.out.println("Scott > SnapshotProcessor > process :: created task");
+                // System.out.println("Scott > SnapshotProcessor > process :: created task");
                 LOG.info("Scott > SnapshotProcessor > created task for path {}", task.getFilePath());
-                System.out.println("Scott > SnapshotProcessor > created task for path " + task.getFilePath());
+                // System.out.println("Scott > SnapshotProcessor > created task for path " + task.getFilePath());
                 final Path filePath = new Path(task.getFilePath());
                 final DeltaSourceSplit split = new DeltaSourceSplit(
                     task.getPartitionValues(), // partitionValues
@@ -117,7 +116,7 @@ public class SnapshotProcessor extends TableProcessorBase {
                 splits.add(split);
                 alreadyProcessedPaths.add(filePath);
             }
-            System.out.println("Scott > SnapshotProcessor > process :: done with iter");
+            // System.out.println("Scott > SnapshotProcessor > process :: done with iter");
         } catch (IOException e) {
             throw new RuntimeException("Scott > SnapshotProcessor > process :: error", e);
         }
@@ -133,7 +132,7 @@ public class SnapshotProcessor extends TableProcessorBase {
 //                    snapshot.getAllFiles()),
 //                alreadyProcessedPaths::add);
 
-        System.out.println("Scott > SnapshotProcessor > process :: done " + splits.size());
+        // System.out.println("Scott > SnapshotProcessor > process :: done " + splits.size());
         processCallback.accept(splits);
     }
 

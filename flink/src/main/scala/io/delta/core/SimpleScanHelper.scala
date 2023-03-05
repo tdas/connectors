@@ -14,13 +14,13 @@ import io.delta.standalone.utils.CloseableIterator
 // scalastyle:off println
 // NOTE: this cannot take in a val hadoopConf: Configuration, Configuration is not serializable
 class SimpleScanHelper() extends DeltaScanHelper with Serializable {
-  println("Scott > Created SimpleScanHelper")
+  // println("Scott > Created SimpleScanHelper")
 
   override def readParquetFile(
       filePath: String,
       readSchema: StructType,
       timeZone: TimeZone): CloseableIterator[ColumnarRowBatch] = {
-    println(s"Scott > SimpleScanHelper > readParquetFile $filePath ${readSchema.getTreeString}")
+    // println(s"Scott > SimpleScanHelper > readParquetFile $filePath ${readSchema.getTreeString}")
     ArrowParquetReader.readAsColumnarBatches(filePath, readSchema, SimpleScanHelper.allocator)
   }
 }

@@ -2,7 +2,11 @@ package io.delta.flink.source.internal.core;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
+import com.google.common.collect.ImmutableMap;
 import io.delta.standalone.data.RowRecord;
 import io.delta.standalone.types.DataType;
 import io.delta.standalone.types.LongType;
@@ -18,32 +22,42 @@ public class RowRecordToRowData implements RowData, Serializable {
 
     private RowKind rowKind;
     private final StructField[] schemaFields;
-    private final long hash;
 
     // map idx -> Object
     // for each field in schemaFields, get its data type, call impl.get$DataTYpe, store in a map
     // no longer have a reference to the impl
     private final Object[] values;
 
-    public RowRecordToRowData(RowRecord impl, StructType schema) {
+    public RowRecordToRowData(RowRecord row, StructType schema) {
         this.schemaFields = schema.getFields();
         this.rowKind = INSERT;
         this.values = new Object[schemaFields.length];
-        this.hash = hashCode() % 10000;
-        System.out.println("Trying to create RowRecordToRowData " + this.hash);
         for (int i = 0; i < schemaFields.length; i++) {
             StructField field = schemaFields[i];
-            DataType dataType = field.getDataType();
-
-            if (dataType instanceof LongType) {
-                values[i] = impl.getLong(field.getName());
-                System.out.println(String.format("[RowRecordToRowData -- " + hash + "] -- Scott > Setting %s -> %s", i, values[i]));
-                System.out.println("created RowRecordToRowData " + this.hash + "--->" + values[i]);
-            } else {
-                throw new UnsupportedOperationException("We only support LongType");
-            }
+            values[i] = getAsObject(row, field.getName(), field.getDataType());
+            System.out.println("" + field.getName() + ": " +
+                field.getDataType().getTypeName() + " = " + values[i]);
         }
-        impl = null;
+    }
+
+    private Object getAsObject(RowRecord row, String name, DataType dataType) {
+        Map<String, Function<String, Object>> dataTypeNameToFunction =
+            ImmutableMap.<String, Function<String, Object>>builder()
+                .put("boolean", row::getBoolean)
+                .put("byte", row::getByte)
+                .put("int", row::getInt)
+                .put("integer", row::getInt)
+                .put("short", row::getShort)
+                .put("long", row::getLong)
+                .put("float", row::getFloat)
+                .put("double", row::getDouble)
+                .put("string", row::getString)
+                .build();
+        if (!row.isNullAt(name) && dataTypeNameToFunction.containsKey(dataType.getTypeName())) {
+            return dataTypeNameToFunction.get(dataType.getTypeName()).apply(name);
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -74,43 +88,40 @@ public class RowRecordToRowData implements RowData, Serializable {
 
     @Override
     public boolean getBoolean(int pos) {
-        throw new UnsupportedOperationException();
+        return (boolean) values[pos];
     }
 
     @Override
     public byte getByte(int pos) {
-        throw new UnsupportedOperationException();
+        return (byte) values[pos];
     }
 
     @Override
     public short getShort(int pos) {
-        throw new UnsupportedOperationException();
+        return (short) values[pos];
     }
 
     @Override
     public int getInt(int pos) {
-        throw new UnsupportedOperationException();
+        return (int) values[pos];
     }
 
     @Override
-    public long getLong(int pos) {
-        System.out.println("[" + this.hash + "] -- getLong --" + (long) values[pos]);
-        return (long) values[pos];
-    }
+    public long getLong(int pos) { return (long) values[pos]; }
 
     @Override
     public float getFloat(int pos) {
-        throw new UnsupportedOperationException();
+        return (float) values[pos];
     }
 
     @Override
     public double getDouble(int pos) {
-        throw new UnsupportedOperationException();
+        return (double) values[pos];
     }
 
     @Override
     public StringData getString(int pos) {
-        throw new UnsupportedOperationException();
+        return StringData.fromString((String) values[pos]);
     }
 
     @Override

@@ -28,11 +28,11 @@ case class CombinedRowRecord(
   override def getLength: Int = innerRow.getLength + partitionValues.size
 
   override def isNullAt(fieldName: String): Boolean = {
-    println(s"Scott > CombinedRowRecord > isNullAt $fieldName")
+    // println(s"Scott > CombinedRowRecord > isNullAt $fieldName")
     if (partitionValues.contains(fieldName)) { // is partition field
       partitionValues(fieldName) == null
     } else {
-      println(s"Scott > CombinedRowRecord > isNullAt >> calling innerRow")
+      // println(s"Scott > CombinedRowRecord > isNullAt >> calling innerRow")
       innerRow.isNullAt(fieldName)
     }
   }

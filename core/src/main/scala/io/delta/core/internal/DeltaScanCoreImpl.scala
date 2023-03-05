@@ -14,7 +14,7 @@ class DeltaScanCoreImpl(
   extends DeltaScanCore {
 
   def getTasks(): CloseableIterator[DeltaScanTaskCore] = {
-    println("Scott > DeltaScanCoreImpl > getTasks()")
+    // println("Scott > DeltaScanCoreImpl > getTasks()")
     new CloseableIterator[DeltaScanTaskCore] {
       private val iter = replay.getAddFileIterator(_ => true)
 
@@ -22,8 +22,8 @@ class DeltaScanCoreImpl(
 
       override def next(): DeltaScanTaskCore = {
         val addFile = iter.next()
-        println("Scott > DeltaScanCoreImpl > next :: iter.next() " + addFile.getPath)
-        println("Add file: " + addFile)
+        // println("Scott > DeltaScanCoreImpl > next :: iter.next() " + addFile.getPath)
+        // println("Add file: " + addFile)
         new DeltaScanTaskCoreImpl(
           FileNames.absolutePath(snapshot.log.dataPath, addFile.getPath),
           addFile.getPartitionValues.asScala.toMap,
