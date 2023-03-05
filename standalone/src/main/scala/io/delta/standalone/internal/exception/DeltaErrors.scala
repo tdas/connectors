@@ -316,14 +316,6 @@ private[internal] object DeltaErrors {
     new IllegalStateException(msg)
   }
 
-  @varargs def illegalExpressionValueType(
-      exprName: String,
-      expectedType: String,
-      realTypes: String*): RuntimeException = {
-    new IllegalArgumentException(
-      s"$exprName expression requires $expectedType type. But found ${realTypes.mkString(", ")}");
-  }
-
   def logStoreConfConflicts(classConf: Seq[String], schemeConf: Seq[String]): Throwable = {
     val schemeConfStr = schemeConf.mkString(", ")
     val classConfStr = classConf.mkString(", ")
@@ -347,6 +339,11 @@ private[internal] object DeltaErrors {
   def nonPartitionColumnAbsentException(): Throwable = {
     new DeltaStandaloneException("Data written into Delta needs to contain at least one " +
       "non-partitioned column")
+  }
+
+  def cannotReconstructPathFromURI(uri: String): Throwable = {
+    new RuntimeException(s"A uri ($uri) which cannot be turned into a relative path " +
+      s"was found in the transaction log.")
   }
 
   ///////////////////////////////////////////////////////////////////////////

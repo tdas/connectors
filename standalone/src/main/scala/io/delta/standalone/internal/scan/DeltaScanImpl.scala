@@ -19,19 +19,25 @@ package io.delta.standalone.internal.scan
 import java.net.URI
 import java.util.{NoSuchElementException, Optional}
 
+import scala.jdk.CollectionConverters.mapAsScalaMapConverter
+
+import io.delta.core.internal.DeltaScanTaskCoreImpl
 import io.delta.standalone.DeltaScan
 import io.delta.standalone.actions.{AddFile => AddFileJ}
-import io.delta.standalone.data.CloseableIterator
+import io.delta.standalone.core.{DeltaScanHelper, DeltaScanTaskCore}
+import io.delta.standalone.data.{CloseableIterator, RowRecord}
 import io.delta.standalone.expressions.Expression
-
 import io.delta.standalone.internal.SnapshotImpl.canonicalizePath
 import io.delta.standalone.internal.actions.{AddFile, MemoryOptimizedLogReplay, RemoveFile}
-import io.delta.standalone.internal.util.ConversionUtils
+import io.delta.standalone.internal.util.{ConversionUtils, FileNames}
 
 /**
  * Scala implementation of Java interface [[DeltaScan]].
  */
-private[internal] class DeltaScanImpl(replay: MemoryOptimizedLogReplay) extends DeltaScan {
+class DeltaScanImpl(
+    replay: MemoryOptimizedLogReplay,
+    scanHelper: DeltaScanHelper
+  ) extends DeltaScan {
 
   /**
    * Whether or not the given [[AddFile]] should be returned during iteration.
@@ -164,4 +170,36 @@ private[internal] class DeltaScanImpl(replay: MemoryOptimizedLogReplay) extends 
       iter.close()
     }
   }
+
+  override def getTasks(): CloseableIterator[DeltaScanTaskCore] = {
+    new CloseableIterator[DeltaScanTaskCore] {
+      private val iter = getFiles
+
+      override def hasNext: Boolean = iter.hasNext
+
+      override def next(): DeltaScanTaskCore = {
+        val addFile = iter.next()
+        val tablePath = replay.snapshot.deltaLog.dataPath
+        new DeltaStandaloneScanTaskCoreImpl(
+          FileNames.absolutePath(tablePath, addFile.getPath).toString,
+          addFile.getPartitionValues.asScala.toMap,
+          replay.snapshot.metadataScala.schema,
+          scanHelper.getReadTimeZone(),
+          scanHelper)
+      }
+
+      override def close(): Unit = iter.close()
+    }
+  }
+
+
+  def getRows(): io.delta.standalone.utils.CloseableIterator[RowRecord] = {
+    import io.delta.core.internal.utils.CloseableIteratorScala._
+    getTasks()
+      .asScalaClosable
+      .flatMapAsCloseable(_.getDataAsRows.asScalaClosable)
+      .flatMapAsCloseable(_.toRowIterator.asScalaClosable)
+      .asJava
+  }
+
 }

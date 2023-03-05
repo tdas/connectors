@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.delta.standalone.core.DeltaScanTaskCore;
 import org.apache.flink.api.connector.source.SourceSplit;
 import org.apache.flink.connector.file.src.FileSourceSplit;
 import org.apache.flink.connector.file.src.util.CheckpointedPosition;
@@ -29,6 +30,8 @@ import org.apache.flink.util.StringUtils;
 public class DeltaSourceSplit extends FileSourceSplit {
 
     private static final String[] NO_HOSTS = StringUtils.EMPTY_STRING_ARRAY;
+
+    public final DeltaScanTaskCore deltaScanTaskCore;
 
     /**
      * Map containing partition column name to partition column value mappings. This mapping is used
@@ -95,15 +98,50 @@ public class DeltaSourceSplit extends FileSourceSplit {
         CheckpointedPosition readerPosition) {
         super(id, filePath, offset, length, hostnames, readerPosition);
 
+        // System.out.println("Scott > DeltaSourceSplit > Constructor2 :: created split for path " + filePath.toString() + " but no scanTaskCore");
+
         // Make split Partition a new Copy of original map to for immutability.
         this.partitionValues =
             (partitionValues == null) ? Collections.emptyMap() : new HashMap<>(partitionValues);
+        this.deltaScanTaskCore = null;
+    }
+
+    public DeltaSourceSplit(Map<String, String> partitionValues, String id,
+                            Path filePath, long offset, long length, String[] hostnames,
+                            CheckpointedPosition readerPosition, DeltaScanTaskCore deltaScanTaskCore) {
+        super(id, filePath, offset, length, hostnames, readerPosition);
+
+        // System.out.println("Scott > DeltaSourceSplit > Constructor3 :: created split for path " + filePath.toString());
+
+        // Make split Partition a new Copy of original map to for immutability.
+        this.partitionValues =
+            (partitionValues == null) ? Collections.emptyMap() : new HashMap<>(partitionValues);
+        this.deltaScanTaskCore = deltaScanTaskCore;
+    }
+
+    public DeltaSourceSplit(
+        Map<String, String> partitionValues,
+        String id,
+        Path filePath,
+        long offset,
+        long length,
+        DeltaScanTaskCore deltaScanTaskCore
+    ) {
+        super(id, filePath, offset, length, NO_HOSTS, null);
+        // System.out.println("Scott > DeltaSourceSplit > Constructor :: created split for path " + filePath.toString());
+
+        // Make split Partition a new Copy of original map to for immutability.
+        this.partitionValues =
+            (partitionValues == null) ? Collections.emptyMap() : new HashMap<>(partitionValues);
+
+        this.deltaScanTaskCore = deltaScanTaskCore;
     }
 
     @Override
     public DeltaSourceSplit updateWithCheckpointedPosition(CheckpointedPosition position) {
+        // System.out.println("DeltaSourceSplit > updateWithCheckpointedPosition");
         return new DeltaSourceSplit(partitionValues, splitId(), path(), offset(), length(),
-            hostnames(), position);
+            hostnames(), position, this.deltaScanTaskCore);
     }
 
     /**

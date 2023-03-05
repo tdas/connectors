@@ -61,7 +61,7 @@ public class BoundedSplitEnumeratorProvider implements SplitEnumeratorProvider {
 
         SnapshotProcessor snapshotProcessor =
             new SnapshotProcessor(deltaTablePath, initSnapshot,
-                fileEnumeratorProvider.create(), Collections.emptySet());
+                fileEnumeratorProvider.create(), Collections.emptySet(), null /* deltaSnapshotCore */, configuration);
 
         return new BoundedDeltaSourceSplitEnumerator(
             deltaTablePath, snapshotProcessor, splitAssignerProvider.create(emptyList()),

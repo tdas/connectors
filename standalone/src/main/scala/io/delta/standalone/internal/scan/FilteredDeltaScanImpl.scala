@@ -40,7 +40,7 @@ final private[internal] class FilteredDeltaScanImpl(
     replay: MemoryOptimizedLogReplay,
     expr: Expression,
     partitionSchema: StructType,
-    hadoopConf: Configuration) extends DeltaScanImpl(replay) {
+    hadoopConf: Configuration) extends DeltaScanImpl(replay, null) {
 
   private val partitionColumns = partitionSchema.getFieldNames.toSeq
   private val evaluationResults = mutable.Map.empty[Map[String, String], Boolean]

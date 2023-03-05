@@ -19,17 +19,19 @@ package io.delta.standalone.internal.actions
 import java.util.TimeZone
 
 import com.github.mjakubowski84.parquet4s.{ParquetIterable, ParquetReader}
-import io.delta.storage.{CloseableIterator, LogStore}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 
+import io.delta.standalone.internal.SnapshotImpl
 import io.delta.standalone.internal.util.JsonUtils
+import io.delta.storage.{CloseableIterator, LogStore}
 
 /**
  * Used to replay the transaction logs from the newest log file to the oldest log file, in a
  * memory-efficient, lazy, iterated manner.
  */
 private[internal] class MemoryOptimizedLogReplay(
+    val snapshot: SnapshotImpl,
     files: Seq[Path],
     logStore: LogStore,
     val hadoopConf: Configuration,
