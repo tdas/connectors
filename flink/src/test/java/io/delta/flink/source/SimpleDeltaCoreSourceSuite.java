@@ -20,21 +20,25 @@ import org.junit.Test;
 
 public class SimpleDeltaCoreSourceSuite extends TestLogger {
     @Test
-    public void test00() throws Exception {
-        /*
-        path = "/tmp/delta_core_flink_test_tables/table_000"
-        for i in range(8):
-            low = i*100
-            high = low+100
-            spark.range(low, high).write.format("delta").mode("append").save(path)
-         */
+    public void test_table_without_dv() throws Exception {
         printTable(
-            "/Users/tdas/Projects/connectors/golden-tables/src/test/resources/golden/data-reader-primitives/",
-            new String[] { "int", "long", "byte", "short", "boolean", "float", "double", "string" }
+            "../standalone/src/test/resources/delta/table-without-dv-small/",
+            new String[] { "int" }
+        );
+    }
+
+    @Test
+    public void test_table_with_dv() throws Exception {
+        printTable(
+            "../standalone/src/test/resources/delta/table-with-dv-small/",
+            new String[] { "int" }
         );
     }
 
     private void printTable(String tablePath, String[] columnTypes) throws Exception {
+        System.out.println("\n\n\n" +
+            "\n------------------------\n" + tablePath + "\n------------------------\n");
+
         final Configuration hadoopConf = new Configuration();
         final Path path = Path.fromLocalFile(new File(tablePath));
         DeltaSource<RowData> source = DeltaSource.forBoundedRowData(path, hadoopConf).build();
@@ -51,10 +55,6 @@ public class SimpleDeltaCoreSourceSuite extends TestLogger {
         int count = 0;
         while (client.iterator.hasNext()) {
             RowData row = client.iterator.next();
-            if (count == 0) {
-                System.out.println("\n\n\n" +
-                    "\n------------------------\n" + tablePath + "\n------------------------\n");
-            }
             System.out.print(toString(row, columnTypes));
             count++;
         }
