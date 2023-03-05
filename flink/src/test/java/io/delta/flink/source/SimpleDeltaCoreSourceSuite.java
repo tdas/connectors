@@ -20,6 +20,15 @@ import org.junit.Test;
 
 public class SimpleDeltaCoreSourceSuite extends TestLogger {
     @Test
+    public void warmup() throws Exception {
+        printTable(
+            "/tmp/test-delta",
+            new String[] { "int" }
+        );
+        System.out.println("\n.\n.\n.\n.");
+    }
+
+    @Test
     public void test_table_without_dv() throws Exception {
         printTable(
             "../standalone/src/test/resources/delta/table-without-dv-small/",
