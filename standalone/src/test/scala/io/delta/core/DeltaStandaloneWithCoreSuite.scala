@@ -6,34 +6,15 @@ import java.util.TimeZone
 
 import scala.collection.JavaConverters._
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ObjectNode
-import org.apache.arrow.memory.RootAllocator
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
 import org.scalatest.FunSuite
 
-import io.delta.core.internal.{DeltaLogCoreImpl, DeltaScanCoreImpl}
-import io.delta.standalone.core.DeltaScanHelper
-import io.delta.standalone.data.{ColumnarRowBatch, RowRecord}
+import io.delta.standalone.data.RowRecord
 import io.delta.standalone.types._
-import io.delta.standalone.utils.CloseableIterator
 import io.delta.standalone.DeltaLog
 import io.delta.standalone.internal.scan.DeltaScanImpl
+import io.delta.standalone.internal.util.GoldenTableUtils
 
-
-class ArrowScanHelper(val hadoopConf: Configuration) extends DeltaScanHelper {
-  override def readParquetFile(
-      filePath: String,
-      readSchema: StructType,
-      timeZone: TimeZone): CloseableIterator[ColumnarRowBatch] = {
-    ArrowParquetReader.readAsColumnarBatches(filePath, readSchema, ArrowScanHelper.allocator)
-  }
-}
-
-object ArrowScanHelper {
-  val allocator = new RootAllocator
-}
 
 class DeltaStandaloneWithCoreSuite extends FunSuite {
 
@@ -41,9 +22,8 @@ class DeltaStandaloneWithCoreSuite extends FunSuite {
     GoldenTableUtils.withGoldenTable("data-reader-primitives") { tablePath =>
       val conf = new Configuration()
       val log = DeltaLog.forTable(conf, tablePath)
-      val scanHelper = new ArrowScanHelper(conf)
       val snapshot = log.snapshot()
-      val scan = snapshot.scan(scanHelper)
+      val scan = snapshot.scan()
       printRows(scan.asInstanceOf[DeltaScanImpl].getRows().asScala)
     }
   }

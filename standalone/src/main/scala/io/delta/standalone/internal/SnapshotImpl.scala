@@ -34,6 +34,7 @@ import io.delta.standalone.core.DeltaScanHelper
 import io.delta.standalone.data.{CloseableIterator, RowRecord => RowParquetRecordJ}
 import io.delta.standalone.expressions.Expression
 import io.delta.standalone.internal.actions.{AddFile, InMemoryLogReplay, MemoryOptimizedLogReplay, Metadata, Parquet4sSingleActionWrapper, Protocol, RemoveFile, SetTransaction, SingleAction}
+import io.delta.standalone.internal.core.SimpleScanHelper
 import io.delta.standalone.internal.data.CloseableParquetDataIterator
 import io.delta.standalone.internal.exception.DeltaErrors
 import io.delta.standalone.internal.logging.Logging
@@ -65,7 +66,7 @@ private[internal] class SnapshotImpl(
   // Public API Methods
   ///////////////////////////////////////////////////////////////////////////
 
-  override def scan(): DeltaScan = this.scan(null.asInstanceOf[DeltaScanHelper])
+  override def scan(): DeltaScan = this.scan(new SimpleScanHelper)
 
   override def scan(scanHelper: DeltaScanHelper): DeltaScan =
     new DeltaScanImpl(memoryOptimizedLogReplay, scanHelper)

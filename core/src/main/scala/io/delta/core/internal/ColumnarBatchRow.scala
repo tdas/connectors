@@ -1,14 +1,15 @@
 package io.delta.core.internal
 
 import java.sql.{Date, Timestamp}
+
 import java.util
 
 import io.delta.standalone.data.{ColumnarRowBatch, ColumnVector, RowRecord}
-import io.delta.standalone.types.StructType
+import io.delta.standalone.types._
 
-
+// reference to a ROW in a table by using the index
 class ColumnarBatchRow(
-    columnarBatch: ColumnarRowBatch,
+    columnarBatch: ColumnarRowBatch, // the actual data in the table
     rowId: Int
   ) extends RowRecord {
   /**
@@ -68,5 +69,27 @@ class ColumnarBatchRow(
 
   private def getVector(fieldName: String): ColumnVector = {
     columnarBatch.getColumnVector(fieldName)
+  }
+
+  override def toString(): String = {
+
+    getSchema.getFields.map { f =>
+      def toStr(func: String => _): String = {
+        if (this.isNullAt(f.getName)) "<NULL>" else func(f.getName).toString
+      }
+
+      val value = f.getDataType match {
+        case _: ByteType => toStr(getByte)
+        case _: IntegerType => toStr(getInt)
+        case _: LongType => toStr(getLong)
+        case _: ShortType => toStr(getShort)
+        case _: DoubleType => toStr(getDouble)
+        case _: FloatType => toStr(getFloat)
+        case _: BooleanType => toStr(getBoolean)
+        case _: StringType => toStr(getString)
+        case _ => "..."
+      }
+      s"${f.getName} = $value"
+    }.mkString("[", ", ", "]")
   }
 }

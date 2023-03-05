@@ -38,12 +38,13 @@
 
 package io.delta.standalone.types;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * A field inside a {@link StructType}.
  */
-public final class StructField {
+public final class StructField implements Serializable {
     private final String name;
     private final DataType dataType;
     private final boolean nullable;

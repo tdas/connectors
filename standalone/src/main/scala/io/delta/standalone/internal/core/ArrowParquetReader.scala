@@ -1,4 +1,4 @@
-package io.delta.core
+package io.delta.standalone.internal.core
 
 import java.util.Optional
 
@@ -53,10 +53,14 @@ object ArrowParquetReader {
           if (!isNextBatchLoaded) {
             isNextBatchLoaded = reader.loadNextBatch()
             if (isNextBatchLoaded) {
-              if (nextBatch != null) { nextBatch.close() }
+              if (nextBatch != null) {
+                nextBatch.close()
+              }
               nextBatch = new ArrowColumnarBatch(reader.getVectorSchemaRoot())
             } else {
-              close()
+              // close()
+              // dont close automatically. let the caller close only when caller has decided
+              // that it has consumed all the previous batches.
             }
           }
           isNextBatchLoaded
@@ -72,7 +76,9 @@ object ArrowParquetReader {
         override def close(): Unit = {
           if (!closed) {
             closeAll()
-            if (nextBatch != null) { nextBatch.close() }
+            if (nextBatch != null) {
+              nextBatch.close()
+            }
             isNextBatchLoaded = false
             closed = true
           }
@@ -96,11 +102,7 @@ object ArrowParquetReader {
     readAsColumnarBatches(filePath, readSchema, allocator)
       .asScalaCloseable
       .flatMapAsCloseable { batch =>
-        println(s"batch = $batch")
-        val rows = batch.getRows
-        println(s"rows = $rows")
-        val x = rows.asScalaCloseable
-        x
+        batch.getRows.asScalaCloseable
       }.asJava
   }
 }

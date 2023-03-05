@@ -454,7 +454,6 @@ lazy val standaloneWithoutParquetUtils = project
 
 lazy val standalone = (project in file("standalone"))
   .dependsOn(core)
-  .dependsOn(core % "test->test")
   .enablePlugins(GenJavadocPlugin, JavaUnidocPlugin)
   .settings(
     name := "delta-standalone-original",
@@ -473,9 +472,17 @@ lazy val standalone = (project in file("standalone"))
         ExclusionRule("com.fasterxml.jackson.core"),
         ExclusionRule("com.fasterxml.jackson.module")
       ),
-      "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
       "io.delta" % "delta-storage" % deltaStorageVersion,
       "org.xerial.snappy" % "snappy-java" % snappyVersion,
+
+      // For delta-core helpers
+      "org.apache.arrow" % "arrow-dataset" % "11.0.0",
+      "org.apache.arrow" % "arrow-memory-unsafe" % arrowVersion excludeAll (
+        ExclusionRule("com.fasterxml.jackson.core"),
+        ExclusionRule("com.fasterxml.jackson.module")
+      ),
+
+      "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
 
       // Compiler plugins
       // -- Bump up the genjavadoc version explicitly to 0.18 to work with Scala 2.12
@@ -729,6 +736,7 @@ def flinkScalaVersion(scalaBinaryVersion: String): String = {
 val flinkVersion = "1.15.3"
 lazy val flink = (project in file("flink"))
   .dependsOn(standaloneCosmetic % "provided")
+  .dependsOn(core % "compile->compile;test->test")
   .enablePlugins(GenJavadocPlugin, JavaUnidocPlugin)
   .settings (
     name := "delta-flink",
@@ -757,6 +765,7 @@ lazy val flink = (project in file("flink"))
         </developers>,
     crossPaths := false,
     libraryDependencies ++= Seq(
+      // Previous
       "org.apache.flink" % "flink-parquet" % flinkVersion % "provided",
       "org.apache.flink" % "flink-table-common" % flinkVersion % "provided",
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % "provided",
