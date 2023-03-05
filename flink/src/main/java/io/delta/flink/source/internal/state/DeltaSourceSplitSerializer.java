@@ -116,7 +116,7 @@ public final class DeltaSourceSplitSerializer
             throw new RuntimeException("Scott > failed to deserialize scanTaskScore", e);
         }
 
-        System.out.println("Scott > DeltaSourceSplitSerializer > deserializeV1");
+        // System.out.println("Scott > DeltaSourceSplitSerializer > deserializeV1");
 //        ObjectInputStream in = new ObjectInputStream(fileIn);
 //        e = (Employee) in.readObject();
 //        DeltaScanTaskCore scanTaskCore =
@@ -150,9 +150,9 @@ public final class DeltaSourceSplitSerializer
         partitionSerDe.serialize(split.getPartitionValues(), outputWrapper);
 
         ObjectOutputStream stream = new ObjectOutputStream(outputWrapper);
-        System.out.println("Scott > trying to serialize split.deltaScanTaskCore " + split.path());
+        // System.out.println("Scott > trying to serialize split.deltaScanTaskCore " + split.path());
         stream.writeObject(split.deltaScanTaskCore);
-        System.out.println("Scott > serialized split.deltaScanTaskCore " + split.path());
+        // System.out.println("Scott > serialized split.deltaScanTaskCore " + split.path());
 //        outputWrapper.close(); ???
     }
 }

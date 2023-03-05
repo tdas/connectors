@@ -1,7 +1,10 @@
 package io.delta.flink.source;
 
 import java.io.File;
+import java.util.Map;
+import java.util.function.Function;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
@@ -25,8 +28,15 @@ public class SimpleDeltaCoreSourceSuite extends TestLogger {
             high = low+100
             spark.range(low, high).write.format("delta").mode("append").save(path)
          */
+        printTable(
+            "/Users/tdas/Projects/connectors/golden-tables/src/test/resources/golden/data-reader-primitives/",
+            new String[] { "int", "long", "byte", "short", "boolean", "float", "double", "string" }
+        );
+    }
+
+    private void printTable(String tablePath, String[] columnTypes) throws Exception {
         final Configuration hadoopConf = new Configuration();
-        final Path path = Path.fromLocalFile(new File("/tmp/delta_core_flink_test_tables/table_000"));
+        final Path path = Path.fromLocalFile(new File(tablePath));
         DeltaSource<RowData> source = DeltaSource.forBoundedRowData(path, hadoopConf).build();
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -40,9 +50,44 @@ public class SimpleDeltaCoreSourceSuite extends TestLogger {
 
         int count = 0;
         while (client.iterator.hasNext()) {
-            System.out.println(client.iterator.next());
+            RowData row = client.iterator.next();
+            if (count == 0) {
+                System.out.println("\n\n\n" +
+                    "\n------------------------\n" + tablePath + "\n------------------------\n");
+            }
+            System.out.print(toString(row, columnTypes));
             count++;
         }
-        System.out.println("COUNT: " + count);
+        System.out.println("# rows: " + count);
+    }
+
+
+    private String toString(RowData row, String[] columnTypes) {
+        String str = "|";
+        for (int i = 0; i < columnTypes.length; i++) {
+            str = str + " " + toString(row, columnTypes[i], i) + " |";
+        }
+        return str;
+    }
+
+    private String toString(RowData row, String type, int pos) {
+        Map<String, Function<Integer, Object>> dataTypeNameToFunction =
+            ImmutableMap.<String, Function<Integer, Object>>builder()
+                .put("boolean", row::getBoolean)
+                .put("byte", row::getByte)
+                .put("int", row::getInt)
+                .put("short", row::getShort)
+                .put("long", row::getLong)
+                .put("float", row::getFloat)
+                .put("double", row::getDouble)
+                .put("string", row::getString)
+                .build();
+        if (row.isNullAt(pos)) {
+            return "<NULL>";
+        } else if (dataTypeNameToFunction.containsKey(type)) {
+            return dataTypeNameToFunction.get(type).apply(pos).toString();
+        } else {
+            return "...";
+        }
     }
 }

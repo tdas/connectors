@@ -98,8 +98,7 @@ public class DeltaSourceSplit extends FileSourceSplit {
         CheckpointedPosition readerPosition) {
         super(id, filePath, offset, length, hostnames, readerPosition);
 
-        System.out.println("Scott > DeltaSourceSplit > Constructor2 :: created split for path " +
-            filePath.toString() + " but no scanTaskCore");
+        // System.out.println("Scott > DeltaSourceSplit > Constructor2 :: created split for path " + filePath.toString() + " but no scanTaskCore");
 
         // Make split Partition a new Copy of original map to for immutability.
         this.partitionValues =
@@ -112,8 +111,7 @@ public class DeltaSourceSplit extends FileSourceSplit {
                             CheckpointedPosition readerPosition, DeltaScanTaskCore deltaScanTaskCore) {
         super(id, filePath, offset, length, hostnames, readerPosition);
 
-        System.out.println("Scott > DeltaSourceSplit > Constructor3 :: created split for path " +
-            filePath.toString());
+        // System.out.println("Scott > DeltaSourceSplit > Constructor3 :: created split for path " + filePath.toString());
 
         // Make split Partition a new Copy of original map to for immutability.
         this.partitionValues =
@@ -130,7 +128,7 @@ public class DeltaSourceSplit extends FileSourceSplit {
         DeltaScanTaskCore deltaScanTaskCore
     ) {
         super(id, filePath, offset, length, NO_HOSTS, null);
-        System.out.println("Scott > DeltaSourceSplit > Constructor :: created split for path " + filePath.toString());
+        // System.out.println("Scott > DeltaSourceSplit > Constructor :: created split for path " + filePath.toString());
 
         // Make split Partition a new Copy of original map to for immutability.
         this.partitionValues =
@@ -141,7 +139,7 @@ public class DeltaSourceSplit extends FileSourceSplit {
 
     @Override
     public DeltaSourceSplit updateWithCheckpointedPosition(CheckpointedPosition position) {
-        System.out.println("DeltaSourceSplit > updateWithCheckpointedPosition");
+        // System.out.println("DeltaSourceSplit > updateWithCheckpointedPosition");
         return new DeltaSourceSplit(partitionValues, splitId(), path(), offset(), length(),
             hostnames(), position, this.deltaScanTaskCore);
     }

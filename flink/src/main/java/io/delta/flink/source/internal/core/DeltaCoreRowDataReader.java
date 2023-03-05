@@ -21,11 +21,13 @@ import static org.apache.flink.connector.file.src.util.RecordAndPosition.NO_OFFS
 public class DeltaCoreRowDataReader implements BulkFormat.Reader<RowData> {
     private final DeltaScanTaskCore deltaScanTaskCore;
     private final CloseableIterator<RowBatch> rowBatchIter; // ITERATOR of ITERATOR of ROWS
+    private long hash = 0;
 
     public DeltaCoreRowDataReader(DeltaScanTaskCore deltaScanTaskCore) {
-        System.out.println("Created DeltaCoreRowDataReader >> " + deltaScanTaskCore);
+        // System.out.println("Created DeltaCoreRowDataReader >> " + deltaScanTaskCore);
         this.deltaScanTaskCore = deltaScanTaskCore;
         this.rowBatchIter = deltaScanTaskCore.getDataAsRows();
+        this.hash = this.hashCode() % 1000;
     }
 
     /**
@@ -40,18 +42,21 @@ public class DeltaCoreRowDataReader implements BulkFormat.Reader<RowData> {
     @Override
     public BulkFormat.RecordIterator<RowData> readBatch() throws IOException {
         if (!rowBatchIter.hasNext()) {
-            System.out.println("Scott > DeltaCoreRowDataReader > readBatch RETURNING NULL");
+            // System.out.println("" + hash + " -- Scott > DeltaCoreRowDataReader > readBatch RETURNING NULL");
             return null;
         }
 
-        System.out.println("Scott > DeltaCoreRowDataReader > readBatch RETURNING NEW ITERATOR");
+        RowBatch rowBatch = rowBatchIter.next();
+        // System.out.println("" + hash + " -- Scott > DeltaCoreRowDataReader > BulkFormat.RecordIterator<RowData> > next :: rowBatchIter.next()");
+        final CloseableIterator<RowRecord> recordsIterForCurrentRowBatch = rowBatch.toRowIterator();
+
+        // System.out.println("" + hash + " -- Scott > DeltaCoreRowDataReader > readBatch RETURNING NEW ITERATOR");
 
         /**
          * An iterator over records with their position in the file. The iterator is closeable to
          * support clean resource release and recycling.
          */
         return new BulkFormat.RecordIterator<RowData>() {
-            private CloseableIterator<RowRecord> recordsIterForCurrentRowBatch = null;
             private long numRecords = 0;
 
             /**
@@ -71,19 +76,13 @@ public class DeltaCoreRowDataReader implements BulkFormat.Reader<RowData> {
             @Nullable
             @Override
             public RecordAndPosition<RowData> next() {
-                if (recordsIterForCurrentRowBatch == null) {
-                    final RowBatch rowBatch = rowBatchIter.next();
-                    System.out.println("Scott > DeltaCoreRowDataReader > BulkFormat.RecordIterator<RowData> > next :: rowBatchIter.next()");
-                    recordsIterForCurrentRowBatch = rowBatch.toRowIterator();
-                }
-
                 if (!recordsIterForCurrentRowBatch.hasNext()) {
-                    System.out.println("Scott > DeltaCoreRowDataReader > recordsIterForCurrentRowBatch has no next");
+                    // System.out.println("" + hash + " -- Scott > DeltaCoreRowDataReader > recordsIterForCurrentRowBatch has no next");
                     return null;
                 }
 
                 RowRecord rowRecord = recordsIterForCurrentRowBatch.next();
-                System.out.println("Scott > DeltaCoreRowDataReader > recordsIterForCurrentRowBatch has next " + rowRecord);
+                // System.out.println("" + hash + " -- Scott > DeltaCoreRowDataReader > recordsIterForCurrentRowBatch has next " + rowRecord);
                 RowData rowData = new RowRecordToRowData(rowRecord, deltaScanTaskCore.getSchema());
                 numRecords++;
 
@@ -93,7 +92,7 @@ public class DeltaCoreRowDataReader implements BulkFormat.Reader<RowData> {
 
             @Override
             public void releaseBatch() {
-                System.out.println("Scott > DeltaCoreRowDataReader > releaseBatch");
+                // System.out.println("" + hash + " -- Scott > DeltaCoreRowDataReader > releaseBatch");
             }
         };
     }

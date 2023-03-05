@@ -19,7 +19,6 @@ object ArrowParquetReader {
     filePath: String,
     readSchema: StructType,
     allocator: RootAllocator): CloseableIterator[ColumnarRowBatch] = {
-    println("Scott > ArrowParquetReader > readAsColumnarBatches")
 
     val readColumnNames = readSchema.getFields.map(_.getName)
     val options = new ScanOptions(32768, Optional.of(readColumnNames))
@@ -57,7 +56,9 @@ object ArrowParquetReader {
               if (nextBatch != null) { nextBatch.close() }
               nextBatch = new ArrowColumnarBatch(reader.getVectorSchemaRoot())
             } else {
-              close()
+              // close()
+              // dont close automatically. let the caller close only when caller has decided
+              // that it has consumed all the previous batches.
             }
           }
           isNextBatchLoaded
@@ -97,11 +98,7 @@ object ArrowParquetReader {
     readAsColumnarBatches(filePath, readSchema, allocator)
       .asScalaCloseable
       .flatMapAsCloseable { batch =>
-        println(s"batch = $batch")
-        val rows = batch.getRows
-        println(s"rows = $rows")
-        val x = rows.asScalaCloseable
-        x
+        batch.getRows.asScalaCloseable
       }.asJava
   }
 }
