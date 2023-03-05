@@ -56,7 +56,6 @@ class DeltaStandaloneWithCoreSuite extends FunSuite {
   // latest version (1) data = (1, 2, 3, 4, 5, 6, 7, 8)
   val tableDVSmallPath = new File(resourcePath, "table-with-dv-small").getCanonicalPath
 
-
   val tableDVLargePath =  new File(resourcePath, "table-with-dv-large").getCanonicalPath
   // Table at version 0: contains [0, 2000)
   val expectedTable1DataV0 = Seq.range(0, 2000)
@@ -73,6 +72,7 @@ class DeltaStandaloneWithCoreSuite extends FunSuite {
   val v4Added = Set(900, 1567)
   val expectedTable1DataV4 = expectedTable1DataV3 ++ v4Added
 
+  val tableNoDVSmallPath = new File(resourcePath, "table-without-dv-small").getCanonicalPath
 
   test("scan") {
     GoldenTableUtils.withGoldenTable("data-reader-primitives") { tablePath =>
@@ -104,6 +104,30 @@ class DeltaStandaloneWithCoreSuite extends FunSuite {
       .map(_.getInt("value"))
       .toSet
     assert(valuesSet == expectedTable1DataV4.toSet)
+  }
+
+  test("no dv") {
+    val conf = new Configuration()
+    val log = DeltaLog.forTable(conf, tableNoDVSmallPath)
+    val scanHelper = new ArrowScanHelper(conf)
+    val snapshot = log.snapshot()
+    val scan = snapshot.scan(scanHelper)
+    val valuesSet = scan.asInstanceOf[DeltaScanImpl].getRows().asScala
+      .map(_.getInt("value"))
+      .toSet
+    assert(valuesSet == Seq.range(0, 10).toSet)
+  }
+
+  test("no dv large") {
+    val conf = new Configuration()
+    val log = DeltaLog.forTable(conf, tableDVLargePath)
+    val scanHelper = new ArrowScanHelper(conf)
+    val snapshot = log.getSnapshotForVersionAsOf(0)
+    val scan = snapshot.scan(scanHelper)
+    val valuesSet = scan.asInstanceOf[DeltaScanImpl].getRows().asScala
+      .map(_.getInt("value"))
+      .toSet
+    assert(valuesSet == Seq.range(0, 2000).toSet)
   }
 
   def printRows(iterator: Iterator[RowRecord]): Unit = {
