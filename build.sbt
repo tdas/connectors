@@ -454,7 +454,6 @@ lazy val standaloneWithoutParquetUtils = project
 
 lazy val standalone = (project in file("standalone"))
   .dependsOn(core)
-  .dependsOn(core % "test->test")
   .enablePlugins(GenJavadocPlugin, JavaUnidocPlugin)
   .settings(
     name := "delta-standalone-original",
@@ -473,9 +472,17 @@ lazy val standalone = (project in file("standalone"))
         ExclusionRule("com.fasterxml.jackson.core"),
         ExclusionRule("com.fasterxml.jackson.module")
       ),
-      "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
       "io.delta" % "delta-storage" % deltaStorageVersion,
       "org.xerial.snappy" % "snappy-java" % snappyVersion,
+
+      // For delta-core helpers
+      "org.apache.arrow" % "arrow-dataset" % "11.0.0",
+      "org.apache.arrow" % "arrow-memory-unsafe" % arrowVersion excludeAll (
+        ExclusionRule("com.fasterxml.jackson.core"),
+        ExclusionRule("com.fasterxml.jackson.module")
+      ),
+
+      "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
 
       // Compiler plugins
       // -- Bump up the genjavadoc version explicitly to 0.18 to work with Scala 2.12
@@ -736,7 +743,7 @@ lazy val flink = (project in file("flink"))
     commonSettings,
     releaseSettings,
     publishArtifact := scalaBinaryVersion.value == "2.12", // only publish once
-//    autoScalaLibrary := false, // exclude scala-library from dependencies
+    autoScalaLibrary := false, // exclude scala-library from dependencies
     Test / publishArtifact := false,
     pomExtra :=
       <url>https://github.com/delta-io/connectors</url>
@@ -758,18 +765,6 @@ lazy val flink = (project in file("flink"))
         </developers>,
     crossPaths := false,
     libraryDependencies ++= Seq(
-      // For delta-core
-      "org.apache.arrow" % "arrow-dataset" % "11.0.0",
-      "org.apache.arrow" % "arrow-memory-unsafe" % arrowVersion excludeAll (
-        ExclusionRule("com.fasterxml.jackson.core"),
-        ExclusionRule("com.fasterxml.jackson.module")
-      ),
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.4",
-      "org.json4s" %% "json4s-jackson" % "3.7.0-M11" excludeAll (
-        ExclusionRule("com.fasterxml.jackson.core"),
-        ExclusionRule("com.fasterxml.jackson.module")
-      ),
-
       // Previous
       "org.apache.flink" % "flink-parquet" % flinkVersion % "provided",
       "org.apache.flink" % "flink-table-common" % flinkVersion % "provided",

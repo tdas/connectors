@@ -1,13 +1,12 @@
-package io.delta.core.arrow
+package io.delta.standalone.internal.core
 
 import scala.collection.JavaConverters._
 
 import org.apache.arrow.vector.complex.MapVector
+import org.apache.arrow.vector.types.{DateUnit, FloatingPointPrecision, IntervalUnit, TimeUnit}
 import org.apache.arrow.vector.types.pojo.{ArrowType, Field, FieldType, Schema}
-import org.apache.arrow.vector.types.{DateUnit, FloatingPointPrecision, TimeUnit}
 
 import io.delta.standalone.types._
-
 
 object ArrowUtils {
 

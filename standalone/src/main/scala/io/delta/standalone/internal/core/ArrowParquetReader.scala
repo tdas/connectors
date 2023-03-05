@@ -1,10 +1,10 @@
-package io.delta.core.arrow
+package io.delta.standalone.internal.core
 
 import java.util.Optional
 
 import org.apache.arrow.dataset.file.{FileFormat, FileSystemDatasetFactory}
 import org.apache.arrow.dataset.jni.NativeMemoryPool
-import org.apache.arrow.dataset.scanner.{ScanOptions, Scanner}
+import org.apache.arrow.dataset.scanner.{Scanner, ScanOptions}
 import org.apache.arrow.dataset.source.{Dataset, DatasetFactory}
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.ipc.ArrowReader
@@ -53,7 +53,9 @@ object ArrowParquetReader {
           if (!isNextBatchLoaded) {
             isNextBatchLoaded = reader.loadNextBatch()
             if (isNextBatchLoaded) {
-              if (nextBatch != null) { nextBatch.close() }
+              if (nextBatch != null) {
+                nextBatch.close()
+              }
               nextBatch = new ArrowColumnarBatch(reader.getVectorSchemaRoot())
             } else {
               // close()
@@ -74,7 +76,9 @@ object ArrowParquetReader {
         override def close(): Unit = {
           if (!closed) {
             closeAll()
-            if (nextBatch != null) { nextBatch.close() }
+            if (nextBatch != null) {
+              nextBatch.close()
+            }
             isNextBatchLoaded = false
             closed = true
           }

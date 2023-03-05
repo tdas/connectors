@@ -7,6 +7,7 @@ import java.util.List;
 import io.delta.standalone.data.ColumnVector;
 import io.delta.standalone.data.ColumnarStruct;
 import io.delta.standalone.types.DataType;
+
 import org.apache.arrow.vector.*;
 import org.apache.arrow.vector.complex.StructVector;
 import org.apache.arrow.vector.holders.NullableVarCharHolder;
