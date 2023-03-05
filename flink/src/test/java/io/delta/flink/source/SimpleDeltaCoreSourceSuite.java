@@ -20,6 +20,12 @@ import org.junit.Test;
 
 public class SimpleDeltaCoreSourceSuite extends TestLogger {
     @Test
+    public void warmup() throws Exception {
+        readTable("/tmp/test-delta");
+        System.out.println("\n.\n.\n.\n.");
+    }
+
+    @Test
     public void test_table_without_dv() throws Exception {
         printTable(
             "../standalone/src/test/resources/delta/table-without-dv-small/",
@@ -35,10 +41,7 @@ public class SimpleDeltaCoreSourceSuite extends TestLogger {
         );
     }
 
-    private void printTable(String tablePath, String[] columnTypes) throws Exception {
-        System.out.println("\n\n\n" +
-            "\n------------------------\n" + tablePath + "\n------------------------\n");
-
+    private ClientAndIterator<RowData> readTable(String tablePath) throws Exception {
         final Configuration hadoopConf = new Configuration();
         final Path path = Path.fromLocalFile(new File(tablePath));
         DeltaSource<RowData> source = DeltaSource.forBoundedRowData(path, hadoopConf).build();
@@ -49,9 +52,13 @@ public class SimpleDeltaCoreSourceSuite extends TestLogger {
         env.setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 1000));
 
         DataStream<RowData> stream = env.fromSource(source, WatermarkStrategy.noWatermarks(), "delta-source");
+        return DataStreamUtils.collectWithClient(stream, "Bounded Delta Source Test");
+    }
 
-        ClientAndIterator<RowData> client = DataStreamUtils.collectWithClient(stream, "Bounded Delta Source Test");
-
+    private void printTable(String tablePath, String[] columnTypes) throws Exception {
+        ClientAndIterator<RowData> client = readTable(tablePath);
+        System.out.println("\n\n\n" +
+            "\n------------------------\n" + tablePath + "\n------------------------\n");
         int count = 0;
         while (client.iterator.hasNext()) {
             RowData row = client.iterator.next();

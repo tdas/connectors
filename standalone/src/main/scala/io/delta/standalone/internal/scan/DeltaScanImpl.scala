@@ -19,11 +19,6 @@ package io.delta.standalone.internal.scan
 import java.net.URI
 import java.util.{NoSuchElementException, Optional}
 
-import scala.jdk.CollectionConverters.mapAsScalaMapConverter
-
-import java.util
-
-import io.delta.core.internal.{DeltaScanTaskCoreImpl, DeltaStandaloneScanTaskCoreImpl}
 import io.delta.standalone.DeltaScan
 import io.delta.standalone.actions.{AddFile => AddFileJ}
 import io.delta.standalone.core.{DeltaScanHelper, DeltaScanTaskCore}

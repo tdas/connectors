@@ -3,8 +3,9 @@ package io.delta.flink.source.internal.state;
 import java.io.*;
 import java.util.Map;
 
-import io.delta.core.internal.DeltaStandaloneScanTaskCoreImpl;
+import io.delta.core.internal.DeltaScanTaskCoreImpl;
 import io.delta.standalone.core.DeltaScanTaskCore;
+import io.delta.standalone.internal.scan.DeltaStandaloneScanTaskCoreImpl;
 import org.apache.flink.api.common.typeutils.base.MapSerializer;
 import org.apache.flink.api.common.typeutils.base.StringSerializer;
 import org.apache.flink.api.connector.source.SourceReader;

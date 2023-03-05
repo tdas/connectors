@@ -1,4 +1,4 @@
-package io.delta.core.internal
+package io.delta.standalone.internal.scan
 
 import java.io.DataInputStream
 import java.util
@@ -8,6 +8,7 @@ import scala.collection.JavaConverters._
 
 import org.apache.hadoop.fs.Path
 
+import io.delta.core.internal.{CombinedRowRecord, DeltaRowBatchImpl}
 import io.delta.core.internal.utils.CloseableIteratorScala._
 import io.delta.standalone.core.{DeltaScanHelper, DeltaScanTaskCore, RowIndexFilter}
 import io.delta.standalone.data.{RowBatch, RowRecord}
