@@ -9,6 +9,7 @@ import org.apache.arrow.dataset.source.{Dataset, DatasetFactory}
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.ipc.ArrowReader
 
+import io.delta.standalone.core.RowIndexFilter
 import io.delta.standalone.data.{ColumnarRowBatch, RowRecord}
 import io.delta.standalone.types.StructType
 import io.delta.standalone.utils.CloseableIterator
@@ -18,9 +19,61 @@ object ArrowParquetReader {
   def readAsColumnarBatches(
     filePath: String,
     readSchema: StructType,
-    allocator: RootAllocator): CloseableIterator[ColumnarRowBatch] = {
+    allocator: RootAllocator,
+    filter: RowIndexFilter = null
+  ): CloseableIterator[ColumnarRowBatch] = {
+
+    // we can't flatMap the iterators because we need to track the number of seen rows in the file
+    // to correctly index into the deletion vector
+
+    new CloseableIterator[ColumnarRowBatch] {
+
+      var physicalRowsRead = 0;
+      val arrowBatchIter = readAsColumnarArrowBatches(filePath, readSchema, allocator)
+      var currentBatchIter: CloseableIterator[SlicedColumnarBatch] = null
+
+      // Assumes that before calling:
+      //   - arrowBatchIter.hasNext
+      //   - (logical) currentBatchIter is either null or !currentBatchIter.hasNext
+      // note: currentBatchIter's base batch is closed automatically in the arrowBatchIter.hasNext
+      private def updateCurrent: Unit = {
+//        if (currentBatchIter != null) currentBatchIter.close()
+        val nextBatch = arrowBatchIter.next()
+        currentBatchIter = readAsSlicedBatches(nextBatch, physicalRowsRead, filter)
+        physicalRowsRead += nextBatch.getNumRows
+      }
+
+      override def hasNext: Boolean = {
+        if (currentBatchIter != null && currentBatchIter.hasNext) return true
+        if (!arrowBatchIter.hasNext) return false
+        updateCurrent
+        hasNext
+      }
+
+      // assumes hasNext is called before
+      override def next: ColumnarRowBatch = {
+        currentBatchIter.next()
+      }
+
+      override def close(): Unit = {
+        if (currentBatchIter != null) {
+          currentBatchIter.close()
+        }
+        arrowBatchIter.close()
+      }
+    }
+  }
+
+  private def readAsColumnarArrowBatches(
+    filePath: String,
+    readSchema: StructType,
+    allocator: RootAllocator,
+  ): CloseableIterator[ColumnarRowBatch] = {
 
     val readColumnNames = readSchema.getFields.map(_.getName)
+    // testing with multiple arrow batches
+    // val options = new ScanOptions(8, Optional.of(readColumnNames))
+    // see ArrowColumnarBatch::close; we close a shared resource somewhere here in this scenario
     val options = new ScanOptions(32768, Optional.of(readColumnNames))
 
     var datasetFactory: DatasetFactory = null
@@ -53,7 +106,7 @@ object ArrowParquetReader {
           if (!isNextBatchLoaded) {
             isNextBatchLoaded = reader.loadNextBatch()
             if (isNextBatchLoaded) {
-              if (nextBatch != null) { nextBatch.close() }
+//              if (nextBatch != null) { nextBatch.close() }
               nextBatch = new ArrowColumnarBatch(reader.getVectorSchemaRoot())
             } else {
               close()
@@ -86,14 +139,79 @@ object ArrowParquetReader {
     }
   }
 
+  private def readAsSlicedBatches(
+    baseBatch: ColumnarRowBatch,
+    fileOffset: Int,
+    filter: RowIndexFilter) : CloseableIterator[SlicedColumnarBatch] = {
+    val numRows = baseBatch.getNumRows
+    val deletionVector = new Array[Boolean](numRows)
+    if (filter != null) {
+      filter.materializeIntoVector(fileOffset, fileOffset + numRows, deletionVector)
+    } else {
+      // todo: for now since we can't access KeepAllRowsFilter here in core
+      //   in the future we can update the default argument for filter to be KeepAllRowsFilter
+      //   instead of null
+      Seq(0, numRows).foreach(deletionVector(_) = false)
+    }
+
+    new CloseableIterator[SlicedColumnarBatch] {
+
+      // after hasNext has been called
+      //  - if hasNext = true --> nextOffset points to a non-deleted row
+      //  - if hasNext = false --> nextOffset = numRows
+      var nextOffset = 0
+      var closed = false
+
+      override def hasNext: Boolean = {
+        if (closed) return false
+
+        if (nextOffset >= numRows) {
+          false
+        } else if (!deletionVector(nextOffset)) {
+          true
+        } else {
+          while (nextOffset < numRows && deletionVector(nextOffset)) {
+            nextOffset += 1
+          }
+          hasNext
+        }
+      }
+
+      // assumes that hasNext is always called before next
+      override def next: SlicedColumnarBatch = {
+        if (closed) throw new IllegalStateException("already closed")
+
+        val startIndex = nextOffset
+        // since we know nextOffset must be a non-deleted row (see invariants above)
+        // and we cannot have a batch size of 0
+        var batchSize = 1
+        while (startIndex + batchSize < numRows && !deletionVector(startIndex + batchSize)) {
+          batchSize += 1
+        }
+        nextOffset += batchSize
+        new SlicedColumnarBatch(baseBatch, startIndex, batchSize)
+      }
+
+      override def close(): Unit = {
+        // todo: we have to do something about the SlicedColumnarBatch.close()
+        if (!closed) {
+          baseBatch.close()
+          closed = true
+        }
+      }
+
+    }
+  }
+
   def readAsRows(
     filePath: String,
     readSchema: StructType,
-    allocator: RootAllocator
+    allocator: RootAllocator,
+    filter: RowIndexFilter = null
   ): CloseableIterator[RowRecord] = {
     import io.delta.core.internal.utils.CloseableIteratorScala._
 
-    readAsColumnarBatches(filePath, readSchema, allocator)
+    readAsColumnarBatches(filePath, readSchema, allocator, filter)
       .asScalaCloseable
       .flatMapAsCloseable { batch =>
         println(s"batch = $batch")

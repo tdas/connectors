@@ -66,6 +66,7 @@ lazy val commonSettings = Seq(
   scalaVersion := scala212,
   crossScalaVersions := Seq(scala213, scala212, scala211),
   fork := true,
+  testOptions in Test += Tests.Argument("-oF"),
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
   scalacOptions ++= Seq("-target:jvm-1.8", scalacWarningUnusedImport(scalaVersion.value) ),
   // Configurations to speed up tests and reduce memory footprint
@@ -736,7 +737,6 @@ def flinkScalaVersion(scalaBinaryVersion: String): String = {
 val flinkVersion = "1.15.3"
 lazy val flink = (project in file("flink"))
   .dependsOn(standaloneCosmetic % "provided")
-  .dependsOn(core % "compile->compile;test->test")
   .enablePlugins(GenJavadocPlugin, JavaUnidocPlugin)
   .settings (
     name := "delta-flink",
@@ -784,6 +784,15 @@ lazy val flink = (project in file("flink"))
       "org.mockito" % "mockito-junit-jupiter" % "4.5.0" % "test",
       "org.junit.jupiter" % "junit-jupiter-params" % "5.8.2" % "test",
       "io.github.artsok" % "rerunner-jupiter" % "2.1.6" % "test",
+
+      // For delta-standalone, double adding
+      "org.apache.arrow" % "arrow-dataset" % "11.0.0",
+      "org.apache.arrow" % "arrow-memory-unsafe" % arrowVersion excludeAll (
+        ExclusionRule("com.fasterxml.jackson.core"),
+        ExclusionRule("com.fasterxml.jackson.module")
+      ),
+      "org.roaringbitmap" % "RoaringBitmap" % "0.9.25",
+      "com.google.guava" % "guava" % "16.0.1",
 
       // Compiler plugins
       // -- Bump up the genjavadoc version explicitly to 0.18 to work with Scala 2.12

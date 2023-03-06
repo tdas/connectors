@@ -48,7 +48,8 @@ class DeltaScanTaskCoreImpl(
       val parquetReadFields =
         schema.getFields.filterNot(f => filePartitionValues.contains(f.getName))
       val iter = scanHelper.readParquetFile(
-        filePath, new StructType(parquetReadFields), readTimeZone)
+        filePath, new StructType(parquetReadFields), readTimeZone,
+        null) // just for compile see DeltaStandaloneScanTaskCoreImpl
       override def hasNext: Boolean = iter.hasNext
       override def next(): RowBatch = {
         val extendedRows = iter.next().getRows.asScalaCloseable.mapAsCloseable(row =>

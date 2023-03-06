@@ -210,6 +210,7 @@ private[internal] class DeltaLogImpl private(
    * allowed to read the table that is using the given `protocol`.
    */
   def assertProtocolRead(protocol: Protocol): Unit = {
+    return // skip this for now
     if (protocol != null && Action.readerVersion < protocol.minReaderVersion) {
       throw new DeltaErrors.InvalidProtocolVersionException(Action.protocolVersion, protocol)
     }

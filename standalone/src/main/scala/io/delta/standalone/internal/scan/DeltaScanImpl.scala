@@ -19,9 +19,6 @@ package io.delta.standalone.internal.scan
 import java.net.URI
 import java.util.{NoSuchElementException, Optional}
 
-import scala.jdk.CollectionConverters.mapAsScalaMapConverter
-
-import io.delta.core.internal.DeltaScanTaskCoreImpl
 import io.delta.standalone.DeltaScan
 import io.delta.standalone.actions.{AddFile => AddFileJ}
 import io.delta.standalone.core.{DeltaScanHelper, DeltaScanTaskCore}
@@ -78,8 +75,8 @@ class DeltaScanImpl(
    */
   private def getIterScala: CloseableIterator[AddFile] = new CloseableIterator[AddFile] {
     private val iter = replay.getReverseIterator
-    private val addFiles = new scala.collection.mutable.HashSet[URI]()
-    private val tombstones = new scala.collection.mutable.HashSet[URI]()
+    private val addFiles = new scala.collection.mutable.HashSet[(URI, String)]()
+    private val tombstones = new scala.collection.mutable.HashSet[(URI, String)]()
     private var nextMatching: Option[AddFile] = None
 
     /**
@@ -94,16 +91,22 @@ class DeltaScanImpl(
           case add: AddFile =>
             val canonicalizeAdd = add.copy(
               dataChange = false,
-              path = canonicalizePath(add.path, replay.hadoopConf))
+              path = canonicalizePath(add.path, replay.hadoopConf),
+            )
 
-            val alreadyDeleted = tombstones.contains(canonicalizeAdd.pathAsUri)
-            val alreadyReturned = addFiles.contains(canonicalizeAdd.pathAsUri)
+            val alreadyDeleted = tombstones.contains(
+              (canonicalizeAdd.pathAsUri,
+                Option(canonicalizeAdd.deletionVector).map(_.uniqueId).orNull))
+            val alreadyReturned = addFiles.contains(
+              (canonicalizeAdd.pathAsUri,
+                Option(canonicalizeAdd.deletionVector).map(_.uniqueId).orNull))
 
             if (!alreadyReturned) {
               // no AddFile will appear twice in a checkpoint so we only need non-checkpoint
               // AddFiles in the set
               if (!isCheckpoint) {
-                addFiles += canonicalizeAdd.pathAsUri
+                addFiles.add((canonicalizeAdd.pathAsUri,
+                  Option(canonicalizeAdd.deletionVector).map(_.uniqueId).orNull))
               }
 
               if (!alreadyDeleted) {
@@ -117,7 +120,9 @@ class DeltaScanImpl(
               dataChange = false,
               path = canonicalizePath(remove.path, replay.hadoopConf))
 
-            tombstones += canonicalizeRemove.pathAsUri
+            tombstones.add((canonicalizeRemove.pathAsUri,
+              Option(canonicalizeRemove.deletionVector).map(_.uniqueId).orNull))
+
           case _ => // do nothing
         }
       }
@@ -173,17 +178,21 @@ class DeltaScanImpl(
 
   override def getTasks(): CloseableIterator[DeltaScanTaskCore] = {
     new CloseableIterator[DeltaScanTaskCore] {
-      private val iter = getFiles
+      private val iter = getIterScala
 
       override def hasNext: Boolean = iter.hasNext
 
       override def next(): DeltaScanTaskCore = {
         val addFile = iter.next()
+        // println("Add file path: " + addFile.path)
         val tablePath = replay.snapshot.deltaLog.dataPath
+        // println("Table path: " + tablePath)
         new DeltaStandaloneScanTaskCoreImpl(
-          FileNames.absolutePath(tablePath, addFile.getPath).toString,
-          addFile.getPartitionValues.asScala.toMap,
+          tablePath,
+          FileNames.absolutePath(tablePath, addFile.path).toString,
+          addFile.partitionValues,
           replay.snapshot.metadataScala.schema,
+          addFile.deletionVector,
           scanHelper.getReadTimeZone(),
           scanHelper)
       }

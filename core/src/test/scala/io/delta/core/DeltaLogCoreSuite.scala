@@ -2,6 +2,7 @@ package io.delta.core
 
 // scalastyle:off
 
+import java.io.DataInputStream
 import java.util.{Optional, TimeZone}
 
 import scala.collection.JavaConverters._
@@ -16,7 +17,7 @@ import org.scalatest.FunSuite
 import io.delta.core.internal.{DeltaLogCoreImpl, DeltaScanCoreImpl}
 import io.delta.core.internal.utils.{CloseableIteratorScala, CloseableIteratorScalaImpl}
 import io.delta.core.internal.utils.CloseableIteratorScala._
-import io.delta.standalone.core.{DeltaScanHelper, LogReplayHelper}
+import io.delta.standalone.core.{DeltaScanHelper, LogReplayHelper, RowIndexFilter}
 import io.delta.standalone.data.{ColumnarRowBatch, ColumnVector, RowBatch, RowRecord}
 import io.delta.standalone.expressions.Expression
 import io.delta.standalone.types._
@@ -68,8 +69,21 @@ class TestScanHelper(val hadoopConf: Configuration) extends DeltaScanHelper {
   override def readParquetFile(
       filePath: String,
       readSchema: StructType,
-      timeZone: TimeZone): CloseableIterator[ColumnarRowBatch] = {
-    ArrowParquetReader.readAsColumnarBatches(filePath, readSchema, TestScanHelper.allocator)
+      timeZone: TimeZone,
+      filter: RowIndexFilter
+  ): CloseableIterator[ColumnarRowBatch] = {
+    ArrowParquetReader.readAsColumnarBatches(filePath, readSchema, TestScanHelper.allocator, filter)
+  }
+
+
+  override def readDeletionVectorFile(filePath: String): DataInputStream = {
+    val fs = new Path(filePath).getFileSystem(hadoopConf)
+    val reader = fs.open(new Path(filePath))
+    try {
+      reader
+    } finally {
+      reader.close()
+    }
   }
 }
 
