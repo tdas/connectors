@@ -17,17 +17,21 @@
  */
 package io.delta.flink.internal.table;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import io.delta.flink.internal.table.DeltaFlinkJobSpecificOptions.TableMode;
 import io.delta.flink.source.DeltaSource;
 import io.delta.flink.source.internal.builder.DeltaSourceBuilderBase;
+import io.delta.standalone.DeltaLog;
+import io.delta.standalone.actions.Metadata;
 import org.apache.flink.configuration.ReadableConfig;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.apache.flink.table.connector.source.ScanTableSource;
 import org.apache.flink.table.connector.source.SourceProvider;
+import org.apache.flink.table.connector.source.abilities.SupportsPartitionPushDown;
 import org.apache.flink.table.data.RowData;
 import org.apache.hadoop.conf.Configuration;
 
@@ -35,13 +39,16 @@ import org.apache.hadoop.conf.Configuration;
  * Implementation of {@link ScanTableSource} interface for Table/SQL support for Delta Source
  * connector.
  */
-public class DeltaDynamicTableSource implements ScanTableSource {
+public class DeltaDynamicTableSource implements ScanTableSource, SupportsPartitionPushDown {
 
     private final Configuration hadoopConf;
 
     private final ReadableConfig tableOptions;
 
     private final List<String> columns;
+
+    /** Partition Push Down **/
+    private Optional<List<Map<String, String>>> remainingPartitions = Optional.empty();
 
     /**
      * Constructor for creating Source of Flink dynamic table to Delta table.
@@ -67,9 +74,9 @@ public class DeltaDynamicTableSource implements ScanTableSource {
 
     @Override
     public ScanRuntimeProvider getScanRuntimeProvider(ScanContext runtimeProviderContext) {
-
         TableMode mode = tableOptions.get(DeltaFlinkJobSpecificOptions.MODE);
         String tablePath = tableOptions.get(DeltaTableConnectorOptions.TABLE_PATH);
+        System.out.println("Scott > DeltaDynamicTableSource > getScanRuntimeProvider > mode " + mode.toString());
 
         DeltaSourceBuilderBase<RowData, ?> sourceBuilder;
 
@@ -89,6 +96,7 @@ public class DeltaDynamicTableSource implements ScanTableSource {
         }
 
         sourceBuilder.columnNames(columns);
+        remainingPartitions.ifPresent(sourceBuilder::partitionPushDown);
 
         return SourceProvider.of(sourceBuilder.build());
     }
@@ -103,4 +111,45 @@ public class DeltaDynamicTableSource implements ScanTableSource {
         return "DeltaSource";
     }
 
+    /////////////////////////
+    // Partition Push Down //
+    /////////////////////////
+
+    /**
+     * Returns a list of all partitions that a source can read if available.
+     * A single partition maps each partition key to a partition value.
+     * If Optional.empty() is returned, the list of partitions is queried from the catalog.
+     */
+    @Override
+    public Optional<List<Map<String, String>>> listPartitions() {
+        final String tablePath = tableOptions.get(DeltaTableConnectorOptions.TABLE_PATH);
+        final io.delta.standalone.DeltaLog log = DeltaLog.forTable(hadoopConf, tablePath);
+        final Metadata latestMetadata = log.update().getMetadata();
+        final List<Map<String, String>> output = new ArrayList<>();
+
+        if (!latestMetadata.getPartitionColumns().isEmpty()) {
+            log.snapshot().scan().getFiles().forEachRemaining(addFile -> {
+                final String vals = addFile
+                    .getPartitionValues()
+                    .entrySet()
+                    .stream()
+                    .map(entry -> entry.getKey() + "->" + entry.getValue())
+                    .collect(Collectors.joining(", "));
+                System.out.println("Scott > DeltaDynamicTableSource > listPartitions :: " + vals);
+
+                output.add(addFile.getPartitionValues());
+            });
+        }
+
+        return Optional.of(output);
+    }
+
+    @Override
+    public void applyPartitions(List<Map<String, String>> remainingPartitions) {
+        System.out.println("Scott > DeltaDynamicTableSource > applyPartitions");
+
+        if (remainingPartitions != null && !remainingPartitions.isEmpty()) {
+            this.remainingPartitions = Optional.of(remainingPartitions);
+        }
+    }
 }

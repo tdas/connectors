@@ -1,7 +1,9 @@
 package io.delta.flink.source;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import io.delta.flink.source.internal.builder.ContinuousDeltaSourceBuilder;
 import io.delta.flink.source.internal.builder.DeltaBulkFormat;
@@ -252,7 +254,7 @@ public class RowDataContinuousDeltaSourceBuilder
             format,
             DEFAULT_CONTINUOUS_SPLIT_ENUMERATOR_PROVIDER,
             hadoopConfiguration,
-            sourceConfiguration
-        );
+            sourceConfiguration,
+            Collections.EMPTY_LIST);
     }
 }

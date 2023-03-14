@@ -1,7 +1,7 @@
 package io.delta.flink.source.internal.enumerator;
 
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
+
 import static java.util.Collections.emptyList;
 
 import io.delta.flink.internal.options.DeltaConnectorConfiguration;
@@ -56,9 +56,11 @@ public class ContinuousSplitEnumeratorProvider implements SplitEnumeratorProvide
 
     @Override
     public ContinuousDeltaSourceSplitEnumerator createInitialStateEnumerator(
-            Path deltaTablePath, Configuration configuration,
+            Path deltaTablePath,
+            Configuration configuration,
             SplitEnumeratorContext<DeltaSourceSplit> enumContext,
-            DeltaConnectorConfiguration sourceConfiguration) {
+            DeltaConnectorConfiguration sourceConfiguration,
+            List<Map<String, String>> pushdownPartitions) {
 
         DeltaLog deltaLog =
             DeltaLog.forTable(configuration, SourceUtils.pathToString(deltaTablePath));

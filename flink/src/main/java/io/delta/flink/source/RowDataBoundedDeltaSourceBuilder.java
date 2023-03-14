@@ -182,6 +182,7 @@ public class RowDataBoundedDeltaSourceBuilder
             format,
             DEFAULT_BOUNDED_SPLIT_ENUMERATOR_PROVIDER,
             hadoopConfiguration,
-            sourceConfiguration);
+            sourceConfiguration,
+            pushdownPartitions);
     }
 }

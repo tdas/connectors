@@ -3,6 +3,8 @@ package io.delta.flink.source.internal.enumerator;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Optional;
+
 import static java.util.Collections.singletonMap;
 
 import io.delta.flink.internal.options.DeltaConnectorConfiguration;
@@ -147,7 +149,7 @@ public class ContinuousDeltaSourceSplitEnumeratorCheckpointingTest {
 
         ContinuousDeltaSourceSplitEnumerator enumerator =
             splitEnumeratorProvider.createInitialStateEnumerator(tablePath,
-                DeltaTestUtils.getHadoopConf(), enumContext, sourceConfiguration);
+                DeltaTestUtils.getHadoopConf(), enumContext, sourceConfiguration, Collections.emptyList());
 
         enumerator.start();
 
@@ -217,7 +219,7 @@ public class ContinuousDeltaSourceSplitEnumeratorCheckpointingTest {
 
         ContinuousDeltaSourceSplitEnumerator enumerator =
             splitEnumeratorProvider.createInitialStateEnumerator(tablePath,
-                DeltaTestUtils.getHadoopConf(), enumContext, sourceConfiguration);
+                DeltaTestUtils.getHadoopConf(), enumContext, sourceConfiguration, Collections.emptyList());
 
         enumerator.start();
 
@@ -270,7 +272,8 @@ public class ContinuousDeltaSourceSplitEnumeratorCheckpointingTest {
                 new TestingSplitEnumeratorContext<>(1),
                 new DeltaConnectorConfiguration(
                     singletonMap(DeltaSourceOptions.LOADED_SCHEMA_SNAPSHOT_VERSION.key(),
-                        headSnapshot.getVersion()))
+                        headSnapshot.getVersion())),
+                Collections.emptyList()
             );
 
         enumerator.start();

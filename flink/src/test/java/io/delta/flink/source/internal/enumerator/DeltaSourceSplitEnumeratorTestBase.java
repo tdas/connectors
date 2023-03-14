@@ -235,7 +235,7 @@ public abstract class DeltaSourceSplitEnumeratorTestBase {
     protected DeltaSourceSplitEnumerator createEnumerator() {
         return (DeltaSourceSplitEnumerator) getProvider().createInitialStateEnumerator(
             new Path(TABLE_PATH),
-            DeltaTestUtils.getHadoopConf(), enumContext, sourceConfiguration);
+            DeltaTestUtils.getHadoopConf(), enumContext, sourceConfiguration, Collections.emptyList());
     }
 
     protected DeltaSourceSplitEnumerator createEnumerator(

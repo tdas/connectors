@@ -1,6 +1,9 @@
 package io.delta.flink.source.internal.enumerator;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import io.delta.flink.internal.options.DeltaConnectorConfiguration;
 import io.delta.flink.source.internal.state.DeltaEnumeratorStateCheckpoint;
@@ -31,9 +34,12 @@ public interface SplitEnumeratorProvider extends Serializable {
      * @return {@link SplitEnumerator} instance.
      */
     SplitEnumerator<DeltaSourceSplit, DeltaEnumeratorStateCheckpoint<DeltaSourceSplit>>
-        createInitialStateEnumerator(Path deltaTablePath, Configuration configuration,
-        SplitEnumeratorContext<DeltaSourceSplit> enumContext,
-        DeltaConnectorConfiguration sourceConfiguration);
+        createInitialStateEnumerator(
+            Path deltaTablePath,
+            Configuration configuration,
+            SplitEnumeratorContext<DeltaSourceSplit> enumContext,
+            DeltaConnectorConfiguration sourceConfiguration,
+            List<Map<String, String>> pushdownPartitions);
 
 
     /**

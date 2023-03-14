@@ -10,6 +10,8 @@ import io.delta.flink.source.internal.state.DeltaSourceSplit;
 import io.delta.standalone.core.DeltaScanHelper;
 import io.delta.standalone.core.DeltaScanTaskCore;
 import io.delta.standalone.core.DeltaSnapshotCore;
+import io.delta.standalone.expressions.Expression;
+import io.delta.standalone.types.StructType;
 import io.delta.standalone.utils.CloseableIterator;
 import org.apache.flink.core.fs.Path;
 import org.apache.hadoop.conf.Configuration;
@@ -43,6 +45,8 @@ public class SnapshotProcessor extends TableProcessorBase {
 
     private final DeltaSnapshotCore deltaSnapshotCore;
 
+    private final List<Map<String, String>> pushdownPartitions;
+
     public SnapshotProcessor(
             Path deltaTablePath,
             Snapshot snapshot,
@@ -52,6 +56,7 @@ public class SnapshotProcessor extends TableProcessorBase {
         this.snapshot = snapshot;
         this.alreadyProcessedPaths = new HashSet<>(alreadyProcessedPaths);
         this.deltaSnapshotCore = null;
+        this.pushdownPartitions = Collections.emptyList();
         throw new RuntimeException("Scott > SnapshotProcessor > not using deltaSnapshotCore");
     }
 
@@ -61,7 +66,8 @@ public class SnapshotProcessor extends TableProcessorBase {
             AddFileEnumerator<DeltaSourceSplit> fileEnumerator,
             Collection<Path> alreadyProcessedPaths,
             DeltaSnapshotCore deltaSnapshotCore,
-            Configuration hadoopConf) {
+            Configuration hadoopConf,
+            List<Map<String, String>> pushdownPartitions) {
         super(deltaTablePath, fileEnumerator);
         this.snapshot = snapshot;
         this.alreadyProcessedPaths = new HashSet<>(alreadyProcessedPaths);
@@ -69,6 +75,7 @@ public class SnapshotProcessor extends TableProcessorBase {
         // LOG.info("Scott > SnapshotProcessor > using deltaSnapshotCore");
         // System.out.println("Scott > SnapshotProcessor > using deltaSnapshotCore");
         this.deltaSnapshotCore = deltaSnapshotCore;
+        this.pushdownPartitions = pushdownPartitions;
     }
 
     /**
@@ -83,7 +90,7 @@ public class SnapshotProcessor extends TableProcessorBase {
         // System.out.println("Scott > SnapshotProcessor > process");
 
 //        final DeltaScanCore deltaScanCore = deltaSnapshotCore.scan(deltaScanHelper);
-        final DeltaScan deltaStandaloneScan = snapshot.scan();
+        final DeltaScan deltaStandaloneScan = getDeltaScan();
         // System.out.println("Scott > SnapshotProcessor > process :: created deltaScanCore");
         final List<DeltaSourceSplit> splits = new ArrayList<>();
 
@@ -144,5 +151,23 @@ public class SnapshotProcessor extends TableProcessorBase {
     @Override
     public long getSnapshotVersion() {
         return snapshot.getVersion();
+    }
+
+    private DeltaScan getDeltaScan() {
+        if (pushdownPartitions == null || pushdownPartitions.isEmpty()) {
+            return snapshot.scan();
+        }
+
+        final Expression filterExpression = convertPartitionsToExpression(
+            snapshot.getMetadata().getSchema(),
+            pushdownPartitions);
+
+        return snapshot.scan(filterExpression);
+    }
+
+    private static Expression convertPartitionsToExpression(
+            StructType schema,
+            List<Map<String, String>> partitions) {
+        throw new UnsupportedOperationException("not supported yet");
     }
 }

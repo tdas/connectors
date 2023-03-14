@@ -41,6 +41,15 @@ public class SimpleDeltaCoreSourceSuite extends TestLogger {
         );
     }
 
+    // build/sbt 'flink/testOnly *SimpleDeltaCoreSourceSuite -- -z "test_table_partition_push_downtest_table_with_dv"'
+//    @Test
+//    public void test_table_partition_push_down() throws Exception {
+//        printTable(
+//            "../standalone/src/test/resources/delta/partitioned-table-small",
+//            new String[] { "long", "long", "long" }
+//        );
+//    }
+
     private ClientAndIterator<RowData> readTable(String tablePath) throws Exception {
         final Configuration hadoopConf = new Configuration();
         final Path path = Path.fromLocalFile(new File(tablePath));

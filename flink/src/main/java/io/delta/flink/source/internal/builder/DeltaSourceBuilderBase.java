@@ -1,9 +1,6 @@
 package io.delta.flink.source.internal.builder;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import io.delta.flink.internal.options.DeltaConnectorConfiguration;
 import io.delta.flink.internal.options.DeltaOptionValidationException;
@@ -66,6 +63,8 @@ public abstract class DeltaSourceBuilderBase<T, SELF> {
      */
     protected static final List<String> DEFAULT_COLUMNS = new ArrayList<>(0);
 
+    protected static final List<Map<String, String>> EMPTY_PUSHDOWN_PARTITIONS = Collections.emptyList();
+
     /**
      * Message prefix for validation exceptions.
      */
@@ -100,6 +99,9 @@ public abstract class DeltaSourceBuilderBase<T, SELF> {
      */
     protected List<String> userColumnNames;
 
+    /** Must be serializable, so can't be Optional. */
+    protected List<Map<String, String>> pushdownPartitions;
+
     protected DeltaSourceBuilderBase(
             Path tablePath,
             Configuration hadoopConfiguration,
@@ -111,6 +113,15 @@ public abstract class DeltaSourceBuilderBase<T, SELF> {
         this.optionValidator = new OptionValidator(tablePath,
                 sourceConfiguration,
                 DeltaSourceOptions.USER_FACING_SOURCE_OPTIONS);
+        this.pushdownPartitions = EMPTY_PUSHDOWN_PARTITIONS;
+    }
+
+    public SELF partitionPushDown(List<Map<String, String>> partitions) {
+        System.out.println("Scott > DeltaSourceBuilderBase > partitionPushDown");
+        assert(partitions != null);
+        assert(!partitions.isEmpty());
+        this.pushdownPartitions = partitions;
+        return self();
     }
 
     /**

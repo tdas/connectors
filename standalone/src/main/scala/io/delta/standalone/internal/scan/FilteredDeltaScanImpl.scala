@@ -24,8 +24,8 @@ import org.apache.hadoop.conf.Configuration
 
 import io.delta.standalone.expressions.Expression
 import io.delta.standalone.types.StructType
-
 import io.delta.standalone.internal.actions.{AddFile, MemoryOptimizedLogReplay}
+import io.delta.standalone.internal.core.SimpleScanHelper
 import io.delta.standalone.internal.data.PartitionRowRecord
 import io.delta.standalone.internal.sources.StandaloneHadoopConf
 import io.delta.standalone.internal.util.PartitionUtils
@@ -40,7 +40,7 @@ final private[internal] class FilteredDeltaScanImpl(
     replay: MemoryOptimizedLogReplay,
     expr: Expression,
     partitionSchema: StructType,
-    hadoopConf: Configuration) extends DeltaScanImpl(replay, null) {
+    hadoopConf: Configuration) extends DeltaScanImpl(replay, new SimpleScanHelper()) {
 
   private val partitionColumns = partitionSchema.getFieldNames.toSeq
   private val evaluationResults = mutable.Map.empty[Map[String, String], Boolean]

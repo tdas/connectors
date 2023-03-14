@@ -1,5 +1,9 @@
 package io.delta.flink.source;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import io.delta.flink.internal.options.DeltaConnectorConfiguration;
 import io.delta.flink.source.internal.DeltaSourceInternal;
 import io.delta.flink.source.internal.enumerator.SplitEnumeratorProvider;
@@ -108,8 +112,9 @@ public class DeltaSource<T> extends DeltaSourceInternal<T> {
             BulkFormat<T, DeltaSourceSplit> readerFormat,
             SplitEnumeratorProvider splitEnumeratorProvider,
             Configuration configuration,
-            DeltaConnectorConfiguration sourceConfiguration) {
-        super(tablePath, readerFormat, splitEnumeratorProvider, configuration, sourceConfiguration);
+            DeltaConnectorConfiguration sourceConfiguration,
+            List<Map<String, String>> pushdownPartitions) {
+        super(tablePath, readerFormat, splitEnumeratorProvider, configuration, sourceConfiguration, pushdownPartitions);
     }
 
     /**

@@ -1,5 +1,9 @@
 package io.delta.flink.source.internal;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import io.delta.flink.internal.options.DeltaConnectorConfiguration;
 import io.delta.flink.source.internal.enumerator.SplitEnumeratorProvider;
 import io.delta.flink.source.internal.state.DeltaEnumeratorStateCheckpoint;
@@ -91,17 +95,24 @@ public class DeltaSourceInternal<T>
      */
     private final DeltaConnectorConfiguration sourceConfiguration;
 
+    /** Must be serializable, so can't be Optional. */
+    private final List<Map<String, String>> pushdownPartitions;
+
     // ---------------------------------------------------------------------------------------------
 
-    protected DeltaSourceInternal(Path tablePath, BulkFormat<T, DeltaSourceSplit> readerFormat,
-        SplitEnumeratorProvider splitEnumeratorProvider, Configuration configuration,
-        DeltaConnectorConfiguration sourceConfiguration) {
-
+    protected DeltaSourceInternal(
+            Path tablePath,
+            BulkFormat<T, DeltaSourceSplit> readerFormat,
+            SplitEnumeratorProvider splitEnumeratorProvider,
+            Configuration configuration,
+            DeltaConnectorConfiguration sourceConfiguration,
+            List<Map<String, String>> pushdownPartitions) {
         this.tablePath = tablePath;
         this.readerFormat = readerFormat;
         this.splitEnumeratorProvider = splitEnumeratorProvider;
         this.serializableConf = new SerializableConfiguration(configuration);
         this.sourceConfiguration = sourceConfiguration;
+        this.pushdownPartitions = pushdownPartitions;
     }
 
     @Override
@@ -130,9 +141,13 @@ public class DeltaSourceInternal<T>
     @Override
     public SplitEnumerator<DeltaSourceSplit, DeltaEnumeratorStateCheckpoint<DeltaSourceSplit>>
         createEnumerator(SplitEnumeratorContext<DeltaSourceSplit> enumContext) {
-        return splitEnumeratorProvider.createInitialStateEnumerator(tablePath,
+
+        return splitEnumeratorProvider.createInitialStateEnumerator(
+            tablePath,
             serializableConf.conf(),
-            enumContext, sourceConfiguration);
+            enumContext,
+            sourceConfiguration,
+            pushdownPartitions);
     }
 
     @Override
