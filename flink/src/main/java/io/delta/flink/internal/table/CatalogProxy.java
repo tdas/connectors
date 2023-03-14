@@ -88,13 +88,14 @@ public class CatalogProxy extends BaseCatalog {
     @Override
     public List<CatalogPartitionSpec> listPartitions(ObjectPath tablePath)
         throws TableNotExistException, TableNotPartitionedException, CatalogException {
-
         DeltaCatalogBaseTable catalogTable = getCatalogTable(tablePath);
         if (catalogTable.isDeltaTable()) {
             // Delta standalone Metadata does not provide information about partition value.
             // This information is needed to build CatalogPartitionSpec
-            throw new CatalogException(
-                "Delta table connector does not support partition listing.");
+//            throw new CatalogException(
+//                "Delta table connector does not support partition listing.");
+            System.out.println("Scott > listPartitions(ObjectPath tablePath)");
+            return this.deltaCatalog.listPartitions(objectPathToFileSystemPath(tablePath));
         } else {
             return this.decoratedCatalog.listPartitions(tablePath);
         }
@@ -111,8 +112,10 @@ public class CatalogProxy extends BaseCatalog {
         if (catalogTable.isDeltaTable()) {
             // Delta standalone Metadata does not provide information about partition value.
             // This information is needed to build CatalogPartitionSpec
-            throw new CatalogException(
-                "Delta table connector does not support partition listing.");
+//            throw new CatalogException(
+//                "Delta table connector does not support partition listing.");
+            System.out.println("Scott > listPartitions(ObjectPath tablePath, CatalogPartitionSpec partitionSpec)");
+            return this.deltaCatalog.listPartitions(objectPathToFileSystemPath(tablePath), partitionSpec);
         } else {
             return this.decoratedCatalog.listPartitions(tablePath, partitionSpec);
         }
@@ -128,8 +131,10 @@ public class CatalogProxy extends BaseCatalog {
         if (catalogTable.isDeltaTable()) {
             // Delta standalone Metadata does not provide information about partition value.
             // This information is needed to build CatalogPartitionSpec
-            throw new CatalogException(
-                "Delta table connector does not support partition listing by filter.");
+//            throw new CatalogException(
+//                "Delta table connector does not support partition listing by filter.");
+            System.out.println("Scott > listPartitionsByFilter(ObjectPath tablePath, List<Expression> filters)");
+            return this.deltaCatalog.listPartitionsByFilter(objectPathToFileSystemPath(tablePath), filters);
         } else {
             return this.decoratedCatalog.listPartitionsByFilter(tablePath, filters);
         }
@@ -260,8 +265,7 @@ public class CatalogProxy extends BaseCatalog {
         throws PartitionNotExistException, CatalogException {
 
         if (getCatalogTable(tablePath).isDeltaTable()) {
-            throw new CatalogException(
-                "Delta table connector does not support partition statistics.");
+            return this.deltaCatalog.getPartitionStatistics(objectPathToFileSystemPath(tablePath), tablePath, partitionSpec);
         } else {
             return this.decoratedCatalog.getPartitionStatistics(tablePath, partitionSpec);
         }
@@ -274,8 +278,7 @@ public class CatalogProxy extends BaseCatalog {
         throws PartitionNotExistException, CatalogException {
 
         if (getCatalogTable(tablePath).isDeltaTable()) {
-            throw new CatalogException(
-                "Delta table connector does not support partition column statistics.");
+            return this.deltaCatalog.getPartitionColumnStatistics(objectPathToFileSystemPath(tablePath), tablePath, partitionSpec);
         } else {
             return this.decoratedCatalog.getPartitionColumnStatistics(tablePath, partitionSpec);
         }
@@ -375,5 +378,11 @@ public class CatalogProxy extends BaseCatalog {
         throws TableNotExistException {
         CatalogBaseTable table = this.decoratedCatalog.getTable(tablePath);
         return new DeltaCatalogBaseTable(tablePath, table);
+    }
+
+    private String objectPathToFileSystemPath(ObjectPath tableObjectPath) {
+        DeltaCatalogBaseTable catalogTable = getCatalogTable(tableObjectPath);
+        CatalogBaseTable metastoreTable = catalogTable.getCatalogTable();
+        return metastoreTable.getOptions().get(DeltaTableConnectorOptions.TABLE_PATH.key());
     }
 }

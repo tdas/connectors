@@ -1,20 +1,20 @@
 package io.delta.flink.internal.table;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import io.delta.flink.internal.table.DeltaCatalogTableHelper.DeltaMetastoreTable;
+import io.delta.standalone.Snapshot;
+import io.delta.standalone.actions.AddFile;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.api.Schema;
-import org.apache.flink.table.catalog.Catalog;
-import org.apache.flink.table.catalog.CatalogBaseTable;
-import org.apache.flink.table.catalog.CatalogTable;
-import org.apache.flink.table.catalog.ObjectPath;
-import org.apache.flink.table.catalog.ResolvedCatalogTable;
-import org.apache.flink.table.catalog.exceptions.CatalogException;
-import org.apache.flink.table.catalog.exceptions.DatabaseNotExistException;
-import org.apache.flink.table.catalog.exceptions.TableAlreadyExistException;
-import org.apache.flink.table.catalog.exceptions.TableNotExistException;
+import org.apache.flink.table.catalog.*;
+import org.apache.flink.table.catalog.exceptions.*;
+import org.apache.flink.table.catalog.stats.CatalogColumnStatistics;
+import org.apache.flink.table.catalog.stats.CatalogColumnStatisticsDataBase;
+import org.apache.flink.table.catalog.stats.CatalogColumnStatisticsDataLong;
+import org.apache.flink.table.catalog.stats.CatalogTableStatistics;
+import org.apache.flink.table.expressions.Expression;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.util.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -335,4 +335,125 @@ public class DeltaCatalog {
         DeltaCatalogTableHelper
             .commitToDeltaLog(deltaLog, updatedMetadata, Operation.Name.SET_TABLE_PROPERTIES);
     }
+
+    List<CatalogPartitionSpec> listPartitions(String tablePath) throws TableNotExistException,
+                TableNotPartitionedException,
+                CatalogException {
+        System.out.println("Scott > listPartitions(String) > tablePath :: " + tablePath);
+        final DeltaLog log = DeltaLog.forTable(hadoopConf, tablePath);
+        final Snapshot snapshot = log.update();
+
+        if (snapshot.getMetadata().getPartitionColumns().isEmpty()) {
+            throw new TableNotPartitionedException(null, null); // TODO: we need the objectPath
+        }
+
+
+        final Set<CatalogPartitionSpec> output = new HashSet<>();
+        snapshot.scan().getFiles().forEachRemaining(addFile -> {
+            final String vals = addFile
+                .getPartitionValues()
+                .entrySet()
+                .stream()
+                .map(entry -> entry.getKey() + "->" + entry.getValue())
+                .collect(Collectors.joining(", "));
+            System.out.println("Scott > DeltaCatalog > listPartitions :: " + vals);
+
+            CatalogPartitionSpec spec = new CatalogPartitionSpec(addFile.getPartitionValues());
+
+            if (output.contains(spec)) {
+                System.out.println("Scott > DeltaCatalog > listPartitions :: DUPLICATE " + spec);
+            }
+
+            output.add(spec);
+        });
+
+        return new ArrayList<>(output);
+    }
+
+    public List<CatalogPartitionSpec> listPartitions(
+            String tablePath,
+            CatalogPartitionSpec partitionSpec)
+        throws CatalogException, TableNotPartitionedException, TableNotExistException, PartitionSpecInvalidException {
+
+        System.out.println("Scott > listPartitions(String, CatalogPartitionSpec) > tablePath :: " + tablePath);
+
+        return null;
+    }
+
+    public List<CatalogPartitionSpec> listPartitionsByFilter(
+        String tablePath,
+        List<Expression> filters) throws TableNotExistException, TableNotPartitionedException,
+        CatalogException {
+        System.out.println("Scott > listPartitionsByFilter(String, CatalogPartitionSpec) > tablePath :: " + tablePath);
+        return null;
+    }
+
+    /**
+     * Get the statistics of a partition.
+     * Params:
+     * tablePath – path of the table
+     * partitionSpec – partition spec of the partition
+     * Returns:
+     * statistics of the given partition
+     * Throws:
+     * PartitionNotExistException – if the partition does not exist
+     * CatalogException – in case of any runtime exception
+     *
+     * TODO: use a cache for the tablePath!
+     */
+    public CatalogTableStatistics getPartitionStatistics(
+            String tablePath,
+            ObjectPath tableObjectPath,
+            CatalogPartitionSpec partitionSpec) throws PartitionNotExistException {
+        System.out.println("Scott > getPartitionStatistics :: " + tablePath + ", partitionSpec " + partitionSpec);
+        final DeltaLog log = DeltaLog.forTable(hadoopConf, tablePath);
+        final Snapshot snapshot = log.update();
+        final List<AddFile> filesInPartition = new ArrayList<>();
+
+        snapshot.scan().getFiles().forEachRemaining(addFile -> {
+            // TODO: HORRIBLY inefficient. CACHE instead. also, generate an expression filter??
+            if (addFile.getPartitionValues().equals(partitionSpec.getPartitionSpec())) {
+                filesInPartition.add(addFile);
+            }
+        });
+
+        if (filesInPartition.isEmpty()) {
+            throw new PartitionNotExistException("delta" /* catalog name */, tableObjectPath, partitionSpec);
+        }
+
+        long totalRowCount = 0;
+        final int fileCount = filesInPartition.size();
+        long totalSizeBytes = 0;
+        long totalRawSizeBytes = 0;
+
+        for (AddFile addFile : filesInPartition) {
+            totalRowCount += 10; // TODO parse stats
+            totalSizeBytes += addFile.getSize();
+            totalRawSizeBytes += addFile.getSize();
+        }
+
+
+        return new CatalogTableStatistics(totalRowCount, fileCount, totalSizeBytes, totalRawSizeBytes);
+    }
+
+    public CatalogColumnStatistics getPartitionColumnStatistics(
+            String tablePath,
+            ObjectPath tableObjectPath,
+            CatalogPartitionSpec partitionSpec) throws PartitionNotExistException {
+        System.out.println("Scott > getPartitionColumnStatistics :: " + tablePath + ", partitionSpec " + partitionSpec);
+        // TODO ugh implement this
+
+        // TODO: parse stats!
+        final Long min = 0L;
+        final Long max = 100L;
+        final Long numDistinctValues = 10L;
+        final Long nullCount = 0L;
+
+        final CatalogColumnStatisticsDataBase stat = new CatalogColumnStatisticsDataLong(min, max, numDistinctValues, nullCount);
+        final Map<String, CatalogColumnStatisticsDataBase> m = new HashMap<>();
+        m.put("id", stat);
+        return new CatalogColumnStatistics(m);
+    }
+
+
 }

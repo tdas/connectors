@@ -20,6 +20,23 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static io.delta.flink.utils.DeltaTestUtils.buildCluster;
 
+/*
+To create the test table:
+
+from pyspark.sql.functions import col
+
+path = "/Users/scott.sandre/connectors/standalone/src/test/resources/delta/partitioned-table-small"
+
+for i in range(15):
+	low = i * 10
+	high = low + 10
+	spark.range(low, high).withColumn("part_a", col("id") % 3).withColumn("part_b", col("id") % 5).write.format("delta").partitionBy("part_a", "part_b").mode("append").save(path)
+
+sql(f"select * from delta.`{path}`").show()
+
+sql(f"select COUNT(*) from delta.`{path}`").show()
+ */
+
 public class SimpleDeltaCoreSQLSuite {
 
     @RegisterExtension
@@ -68,7 +85,7 @@ public class SimpleDeltaCoreSQLSuite {
                 + " id BIGINT,"
                 + " part_a BIGINT,"
                 + " part_b BIGINT"
-                + ") "
+                + ") PARTITIONED BY (part_a, part_b) "
                 + "WITH ("
                 + " 'connector' = 'delta',"
                 + " 'table-path' = '%s'"

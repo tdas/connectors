@@ -28,17 +28,26 @@ public class RowRecordToRowData implements RowData, Serializable {
     // no longer have a reference to the impl
     private final Object[] values;
 
-    public RowRecordToRowData(RowRecord row, StructType schema) {
+    public RowRecordToRowData(RowRecord row, StructType schema, Map<String, String> partitionValues) {
         this.schemaFields = schema.getFields();
         this.rowKind = INSERT;
         this.values = new Object[schemaFields.length];
         for (int i = 0; i < schemaFields.length; i++) {
             StructField field = schemaFields[i];
-            values[i] = getAsObject(row, field.getName(), field.getDataType());
+
+            if (partitionValues.containsKey(field.getName())) {
+                // TODO: do this smarter
+                values[i] = Long.parseLong(partitionValues.get(field.getName()));
+                System.out.println("RowRecordToRowData > partitionVal " + field.getName() + " -> " + values[i]);
+            } else {
+                values[i] = getAsObject(row, field.getName(), field.getDataType());
+            }
+
         }
     }
 
     private Object getAsObject(RowRecord row, String name, DataType dataType) {
+        System.out.println("Scott > getAsObject > name " + name + ", dataType " + dataType.getSimpleString() + ", row " + row);
         Map<String, Function<String, Object>> dataTypeNameToFunction =
             ImmutableMap.<String, Function<String, Object>>builder()
                 .put("boolean", row::getBoolean)

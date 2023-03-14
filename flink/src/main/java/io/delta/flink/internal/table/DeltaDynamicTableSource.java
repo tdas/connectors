@@ -48,7 +48,7 @@ public class DeltaDynamicTableSource implements ScanTableSource, SupportsPartiti
     private final List<String> columns;
 
     /** Partition Push Down **/
-    private Optional<List<Map<String, String>>> remainingPartitions = Optional.empty();
+    private Optional<List<Map<String, String>>> remainingPartitions;
 
     /**
      * Constructor for creating Source of Flink dynamic table to Delta table.
@@ -65,6 +65,18 @@ public class DeltaDynamicTableSource implements ScanTableSource, SupportsPartiti
         this.hadoopConf = hadoopConf;
         this.tableOptions = tableOptions;
         this.columns = columns;
+        this.remainingPartitions = Optional.empty();
+    }
+
+    public DeltaDynamicTableSource(
+            Configuration hadoopConf,
+            ReadableConfig tableOptions,
+            List<String> columns,
+            Optional<List<Map<String, String>>> remainingPartition) {
+        this.hadoopConf = hadoopConf;
+        this.tableOptions = tableOptions;
+        this.columns = columns;
+        this.remainingPartitions = remainingPartition;
     }
 
     @Override
@@ -98,12 +110,14 @@ public class DeltaDynamicTableSource implements ScanTableSource, SupportsPartiti
         sourceBuilder.columnNames(columns);
         remainingPartitions.ifPresent(sourceBuilder::partitionPushDown);
 
+        System.out.println("Scott > remainingPartitions > " + remainingPartitions);
         return SourceProvider.of(sourceBuilder.build());
     }
 
     @Override
     public DynamicTableSource copy() {
-        return new DeltaDynamicTableSource(this.hadoopConf, this.tableOptions, this.columns);
+        System.out.println("Scott > DynamicTableSource > copy");
+        return new DeltaDynamicTableSource(this.hadoopConf, this.tableOptions, this.columns, this.remainingPartitions);
     }
 
     @Override
@@ -122,6 +136,7 @@ public class DeltaDynamicTableSource implements ScanTableSource, SupportsPartiti
      */
     @Override
     public Optional<List<Map<String, String>>> listPartitions() {
+        System.out.println("Scott > DeltaDynamicTableSource > listPartitions called!!!");
         final String tablePath = tableOptions.get(DeltaTableConnectorOptions.TABLE_PATH);
         final io.delta.standalone.DeltaLog log = DeltaLog.forTable(hadoopConf, tablePath);
         final Metadata latestMetadata = log.update().getMetadata();

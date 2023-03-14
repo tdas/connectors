@@ -83,7 +83,7 @@ public class DeltaCoreRowDataReader implements BulkFormat.Reader<RowData> {
 
                 RowRecord rowRecord = recordsIterForCurrentRowBatch.next();
                 // System.out.println("" + hash + " -- Scott > DeltaCoreRowDataReader > recordsIterForCurrentRowBatch has next " + rowRecord);
-                RowData rowData = new RowRecordToRowData(rowRecord, deltaScanTaskCore.getSchema());
+                RowData rowData = new RowRecordToRowData(rowRecord, deltaScanTaskCore.getSchema(), deltaScanTaskCore.getPartitionValues());
                 numRecords++;
 
                 // TODO: MutableRecordAndPosition

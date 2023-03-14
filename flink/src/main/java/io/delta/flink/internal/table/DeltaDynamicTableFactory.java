@@ -167,6 +167,8 @@ public class DeltaDynamicTableFactory implements DynamicTableSinkFactory,
             .getLogicalType()
         ).getFieldNames();
 
+        System.out.println("Scott > DeltaDynamicTableFactory > creating DeltaDynamicTableSource");
+
         return new DeltaDynamicTableSource(
             hadoopConf,
             options, // PR FlinkSql_PR_8 change to queryOptions

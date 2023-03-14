@@ -29,6 +29,8 @@ public class DeltaCatalogBaseTable {
 
     private final boolean isDeltaTable;
 
+    // TODO would it be helpful to put the filesystem path in here?
+
     public DeltaCatalogBaseTable(ObjectPath tableCatalogPath, CatalogBaseTable catalogTable) {
         checkNotNull(tableCatalogPath, "Object path cannot be null for DeltaCatalogBaseTable.");
         checkNotNull(catalogTable, "Catalog table cannot be null for DeltaCatalogBaseTable.");
