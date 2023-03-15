@@ -22,15 +22,15 @@ import org.junit.Test;
 import io.delta.standalone.types.LongType;
 import io.delta.standalone.types.StringType;
 import io.delta.standalone.types.StructType;
-//import io.delta.standalone.util.ParquetSchemaConverter;
+import io.delta.standalone.util.ParquetSchemaConverter;
 
 public class TestParquetDependency {
 
-//    @Test
-//    public void test_dependency() {
-//        StructType schema = new StructType()
-//            .add("col1", new StringType())
-//            .add("col2", new LongType());
-//        MessageType messageType = ParquetSchemaConverter.deltaToParquet(schema);
-//    }
+    @Test
+    public void test_dependency() {
+        StructType schema = new StructType()
+            .add("col1", new StringType())
+            .add("col2", new LongType());
+        MessageType messageType = ParquetSchemaConverter.deltaToParquet(schema);
+    }
 }

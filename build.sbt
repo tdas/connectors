@@ -786,15 +786,6 @@ lazy val flink = (project in file("flink"))
       "org.junit.jupiter" % "junit-jupiter-params" % "5.8.2" % "test",
       "io.github.artsok" % "rerunner-jupiter" % "2.1.6" % "test",
 
-      // Caused by: java.lang.ClassNotFoundException: com.github.mjakubowski84.parquet4s.ParquetReader$
-      // when trying to debug tests with intellij
-      "com.github.mjakubowski84" %% "parquet4s-core" % parquet4sVersion % "test" excludeAll (
-        ExclusionRule("org.slf4j", "slf4j-api")
-      ),
-      // I just want to see the planner jar and code to help debug
-      // org.apache.flink.table.api.TableException: Could not instantiate the executor. Make sure a planner module is on the classpath
-      // "org.apache.flink" %% "flink-table-planner" % flinkVersion % "test",
-
       // Compiler plugins
       // -- Bump up the genjavadoc version explicitly to 0.18 to work with Scala 2.12
       compilerPlugin("com.typesafe.genjavadoc" %% "genjavadoc-plugin" % "0.18" cross CrossVersion.full)
