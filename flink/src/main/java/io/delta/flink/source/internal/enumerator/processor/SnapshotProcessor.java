@@ -3,6 +3,7 @@ package io.delta.flink.source.internal.enumerator.processor;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import io.delta.flink.source.internal.file.AddFileEnumerator;
 import io.delta.flink.source.internal.state.DeltaEnumeratorStateCheckpointBuilder;
@@ -10,7 +11,7 @@ import io.delta.flink.source.internal.state.DeltaSourceSplit;
 import io.delta.standalone.core.DeltaScanHelper;
 import io.delta.standalone.core.DeltaScanTaskCore;
 import io.delta.standalone.core.DeltaSnapshotCore;
-import io.delta.standalone.expressions.Expression;
+import io.delta.standalone.expressions.*;
 import io.delta.standalone.types.StructType;
 import io.delta.standalone.utils.CloseableIterator;
 import org.apache.flink.core.fs.Path;
@@ -162,12 +163,29 @@ public class SnapshotProcessor extends TableProcessorBase {
             snapshot.getMetadata().getSchema(),
             pushdownPartitions);
 
+        System.out.println("filterExpression");
+        System.out.println(filterExpression.toString());
+
         return snapshot.scan(filterExpression);
     }
 
     private static Expression convertPartitionsToExpression(
             StructType schema,
             List<Map<String, String>> partitions) {
-        throw new UnsupportedOperationException("not supported yet");
+        final List<Expression> disjunctions = partitions
+            .stream()
+            .map(partition -> {
+                final List<Expression> conjunctions = partition.entrySet().stream().map(entry -> {
+                    final Column partitionColumn = schema.column(entry.getKey());
+                    System.out.println("Column :: " + partitionColumn.toString());
+                    final Literal partitionColumnValue = Literal.castString(entry.getValue(), partitionColumn.dataType());
+                    System.out.println("Literal :: " + partitionColumnValue.toString());
+                    return new EqualTo(partitionColumn, partitionColumnValue);
+                }).collect(Collectors.toList());
+
+                return And.apply(conjunctions);
+            }).collect(Collectors.toList());
+
+        return Or.apply(disjunctions);
     }
 }

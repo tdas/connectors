@@ -155,5 +155,12 @@ public final class Literal extends LeafExpression {
             throw new IllegalArgumentException(
                     dataType.getTypeName() + " is an invalid data type for Literal.");
         }
-        return new Literal(null, dataType); }
+        return new Literal(null, dataType);
+    }
+
+    public static Literal castString(String value, DataType dataType) {
+        if (dataType instanceof LongType) return Literal.of(Long.parseLong(value));
+
+        throw new RuntimeException("Literal.castString only supports LongType right now");
+    }
 }

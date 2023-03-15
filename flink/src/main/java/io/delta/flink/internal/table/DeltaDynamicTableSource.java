@@ -140,7 +140,7 @@ public class DeltaDynamicTableSource implements ScanTableSource, SupportsPartiti
         final String tablePath = tableOptions.get(DeltaTableConnectorOptions.TABLE_PATH);
         final io.delta.standalone.DeltaLog log = DeltaLog.forTable(hadoopConf, tablePath);
         final Metadata latestMetadata = log.update().getMetadata();
-        final List<Map<String, String>> output = new ArrayList<>();
+        final Set<Map<String, String>> output = new HashSet<>();
 
         if (!latestMetadata.getPartitionColumns().isEmpty()) {
             log.snapshot().scan().getFiles().forEachRemaining(addFile -> {
@@ -152,11 +152,15 @@ public class DeltaDynamicTableSource implements ScanTableSource, SupportsPartiti
                     .collect(Collectors.joining(", "));
                 System.out.println("Scott > DeltaDynamicTableSource > listPartitions :: " + vals);
 
+                if (output.contains(addFile.getPartitionValues())) {
+                    System.out.println("Scott > DeltaDynamicTableSource > listPartitions :: DUPLICATE " + addFile.getPartitionValues());
+                }
                 output.add(addFile.getPartitionValues());
             });
         }
 
-        return Optional.of(output);
+        System.out.println("Scott > DeltaDynamicTableSource > listPartitions :: SIZE OF OUTPUT " + output.size());
+        return Optional.of(new ArrayList<>(output));
     }
 
     @Override

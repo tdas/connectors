@@ -94,7 +94,7 @@ public class SimpleDeltaCoreSQLSuite {
         System.out.println("Scott > test_table_partition_push_down > sourceTableSql  " + sourceTableSql);
         tableEnv.executeSql(sourceTableSql);
 
-        String selectSql = "SELECT * FROM sourceTable /*+ OPTIONS('mode' = 'batch') */";
+        String selectSql = "SELECT * FROM sourceTable /*+ OPTIONS('mode' = 'batch') */ WHERE (part_a = 0 AND part_b = 0) OR (part_a = 1 AND part_b = 1)";
         System.out.println("Scott > test_table_partition_push_down > selectSql  " + selectSql);
 
         TableResult resultTable = tableEnv.executeSql(selectSql);
