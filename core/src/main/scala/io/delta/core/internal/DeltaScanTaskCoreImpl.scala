@@ -17,7 +17,12 @@ class DeltaScanTaskCoreImpl(
     filePartitionValues: Map[String, String],
     schema: StructType,
     readTimeZone: TimeZone,
-    scanHelper: DeltaScanHelper) extends DeltaScanTaskCore {
+    var scanHelper: DeltaScanHelper) extends DeltaScanTaskCore {
+
+  override def injectScanHelper(helper: DeltaScanHelper): Unit = {
+    this.scanHelper = helper
+  }
+
   override def getFilePath: String = filePath
 
   override def getSchema: StructType = schema
