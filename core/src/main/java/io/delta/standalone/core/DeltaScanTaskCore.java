@@ -8,6 +8,9 @@ import io.delta.standalone.types.StructType;
 import io.delta.standalone.utils.CloseableIterator;
 
 public interface DeltaScanTaskCore extends Serializable {
+
+    void injectScanHelper(DeltaScanHelper helper);
+
     CloseableIterator<RowBatch> getDataAsRows();
 
     String getFilePath();
