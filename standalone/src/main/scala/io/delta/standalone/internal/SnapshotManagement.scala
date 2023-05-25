@@ -285,7 +285,7 @@ private[internal] trait SnapshotManagement { self: DeltaLogImpl =>
       this,
       lastCommitTimestamp,
       previousSnapshotOpt.map { previousSnapshot =>
-        SnapshotProtocolMetadataHint(
+        NonFileActionsHint(
           previousSnapshot.protocolScala,
           previousSnapshot.metadataScala,
           previousSnapshot.setTransactionsScala,

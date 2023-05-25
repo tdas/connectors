@@ -43,7 +43,7 @@ import io.delta.standalone.internal.util.{ConversionUtils, FileNames, JsonUtils}
  * Contains the protocol, metadata, and corresponding table version. The protocol and metadata
  * will be used as the defaults in the Snapshot if no newer values are found in logs > `version`.
  */
-case class SnapshotProtocolMetadataHint(
+case class NonFileActionsHint(
   protocol: Protocol,
   metadata: Metadata,
   transactions: Seq[SetTransaction],
@@ -63,7 +63,7 @@ case class ProtocolMetadataLoadMetrics(fileVersions: Seq[Long])
  * @param timestamp The timestamp of the latest commit in milliseconds. Can also be set to -1 if the
  *                  timestamp of the commit is unknown or the table has not been initialized, i.e.
  *                  `version = -1`.
- * @param protocolMetadataHint The optional protocol, metadata, and table version that can be used
+ * @param nonFileActionsHint The optional protocol, metadata, and table version that can be used
  *                             to speed up loading *this* Snapshot's protocol and metadata (P&M).
  *                             Essentially, when computing *this* Snapshot's P&M, we only need to
  *                             look at the log files *newer* than the hint version.
@@ -76,10 +76,10 @@ private[internal] class SnapshotImpl(
     val minFileRetentionTimestamp: Long,
     val deltaLog: DeltaLogImpl,
     val timestamp: Long,
-    protocolMetadataHint: Option[SnapshotProtocolMetadataHint] = Option.empty)
+    nonFileActionsHint: Option[NonFileActionsHint] = Option.empty)
   extends Snapshot with Logging {
 
-  protocolMetadataHint.foreach { hint =>
+  nonFileActionsHint.foreach { hint =>
     require(hint.version <= version, s"Cannot use a protocolMetadataHint with a version newer " +
       s"than that of this Snapshot. Hint version: ${hint.version}, Snapshot version: $version")
   }
@@ -190,7 +190,7 @@ private[internal] class SnapshotImpl(
 
         // We have not yet found the latest P&M. If we had found BOTH, we would have returned
         // already. Note that we may have already found ONE of them.
-        protocolMetadataHint.foreach { hint =>
+        nonFileActionsHint.foreach { hint =>
           if (actionTableVersion == hint.version) {
             // Furthermore, we have already looked at all the actions in all the log files strictly
             // newer (>) than the hint version. Thus, we can short circuit early and use the P&M
@@ -228,7 +228,7 @@ private[internal] class SnapshotImpl(
             protocol = p
           case m: Metadata if null == metadata =>
             // We only need the latest metadata
-          metadata = m
+            metadata = m
           case s: SetTransaction =>
             if (!transactions.contains(s.appId)) transactions(s.appId) = s
           case _ => // do nothing
