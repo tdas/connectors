@@ -472,6 +472,7 @@ lazy val standalone = (project in file("standalone"))
       "com.github.mjakubowski84" %% "parquet4s-core" % parquet4sVersion excludeAll (
         ExclusionRule("org.slf4j", "slf4j-api")
       ),
+      "org.xerial.snappy" % "snappy-java" % "1.1.8.4",
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.12.3",
       "org.json4s" %% "json4s-jackson" % "3.7.0-M11" excludeAll (
         ExclusionRule("com.fasterxml.jackson.core"),

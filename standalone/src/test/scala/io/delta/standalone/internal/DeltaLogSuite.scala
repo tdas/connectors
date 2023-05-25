@@ -690,7 +690,7 @@ abstract class DeltaLogSuiteBase extends FunSuite {
    * Case 5: Same as case 3, but there are metadata and protocol actions newer than the cached
    *         snapshot
    */
-  test("Snapshot should read the minimal number of log files needed when loading " +
+  test("snapshot should read the minimal number of log files needed when loading " +
     "protocol & metadata") {
     withTempDir { dir =>
       val conf = new Configuration()
@@ -770,9 +770,10 @@ abstract class DeltaLogSuiteBase extends FunSuite {
       commit(29, writerLog)
       // The current snapshot is still at V26. We should read V29, V28, see the newest protocol and
       // metadata, and stop early
+      // update this
       val metrics6_snapshot = readerLog.update().asInstanceOf[SnapshotImpl]
       val metrics6 = metrics6_snapshot.protocolMetadataLoadMetrics
-      assert(metrics6.fileVersions.toList.sorted === (28 to 29).toList)
+      assert(metrics6.fileVersions.toList.sorted === (27 to 29).toList)
       assert(metrics6_snapshot.getMetadata.getSchema === metadataV28.getSchema)
       // useless asserting the protocol, since they are the same
     }

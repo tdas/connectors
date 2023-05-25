@@ -43,7 +43,11 @@ import io.delta.standalone.internal.util.{ConversionUtils, FileNames, JsonUtils}
  * Contains the protocol, metadata, and corresponding table version. The protocol and metadata
  * will be used as the defaults in the Snapshot if no newer values are found in logs > `version`.
  */
-case class SnapshotProtocolMetadataHint(protocol: Protocol, metadata: Metadata, version: Long)
+case class SnapshotProtocolMetadataHint(
+  protocol: Protocol,
+  metadata: Metadata,
+  transactions: Seq[SetTransaction],
+  version: Long)
 
 /**
  * Visible for testing.
@@ -141,7 +145,6 @@ private[internal] class SnapshotImpl(
 
   def allFilesScala: Seq[AddFile] = state.activeFiles.toSeq
   def tombstonesScala: Seq[RemoveFile] = state.tombstones.toSeq
-  def setTransactionsScala: Seq[SetTransaction] = state.setTransactions
   def numOfFiles: Long = state.numOfFiles
 
   /** A map to look up transaction version by appId. */
@@ -158,15 +161,18 @@ private[internal] class SnapshotImpl(
    * `loadTableProtocolAndMetadata` would be called for all new InitialSnapshotImpl instances,
    * causing an exception.
    */
-  lazy val (protocolScala, metadataScala, protocolMetadataLoadMetrics) =
-    loadTableProtocolAndMetadata()
+  lazy val (protocolScala, metadataScala, setTransactionsScala, protocolMetadataLoadMetrics) =
+    loadNonFileActions()
 
-  private def loadTableProtocolAndMetadata(): (Protocol, Metadata, ProtocolMetadataLoadMetrics) = {
+  private def loadNonFileActions():
+    (Protocol, Metadata, Seq[SetTransaction], ProtocolMetadataLoadMetrics) = {
+
     val fileVersionsScanned = scala.collection.mutable.Set[Long]()
     def createMetrics = ProtocolMetadataLoadMetrics(fileVersionsScanned.toSeq.sorted.reverse)
 
     var protocol: Protocol = null
     var metadata: Metadata = null
+    val transactions = new scala.collection.mutable.HashMap[String, SetTransaction]()
 
     val iter = memoryOptimizedLogReplay.getReverseIterator
 
@@ -206,7 +212,11 @@ private[internal] class SnapshotImpl(
               metadata
             }
 
-            return (newestProtocol, newestMetadata, createMetrics)
+            hint.transactions.foreach { txn =>
+              if (!transactions.contains(txn.appId)) transactions(txn.appId) = txn
+            }
+
+            return (newestProtocol, newestMetadata, transactions.values.toSeq, createMetrics)
           }
         }
 
@@ -216,18 +226,11 @@ private[internal] class SnapshotImpl(
           case p: Protocol if null == protocol =>
             // We only need the latest protocol
             protocol = p
-
-            if (protocol != null && metadata != null) {
-              // Stop since we have found the latest Protocol and metadata.
-              return (protocol, metadata, createMetrics)
-            }
           case m: Metadata if null == metadata =>
-            metadata = m
-
-            if (protocol != null && metadata != null) {
-              // Stop since we have found the latest Protocol and metadata.
-              return (protocol, metadata, createMetrics)
-            }
+            // We only need the latest metadata
+          metadata = m
+          case s: SetTransaction =>
+            if (!transactions.contains(s.appId)) transactions(s.appId) = s
           case _ => // do nothing
         }
       }
@@ -242,7 +245,7 @@ private[internal] class SnapshotImpl(
     if (metadata == null) {
       throw DeltaErrors.actionNotFoundException("metadata", logSegment.version)
     }
-    throw new IllegalStateException("should not happen")
+    (protocol, metadata, transactions.values.toSeq, createMetrics)
   }
 
   private def loadInMemory(paths: Seq[Path]): Seq[SingleAction] = {
@@ -405,6 +408,8 @@ private class InitialSnapshotImpl(
   override lazy val protocolScala: Protocol = Protocol()
 
   override lazy val metadataScala: Metadata = Metadata()
+
+  override lazy val setTransactionsScala: Seq[SetTransaction] = Nil
 
   override lazy val protocolMetadataLoadMetrics: ProtocolMetadataLoadMetrics =
     ProtocolMetadataLoadMetrics(Seq.empty)
