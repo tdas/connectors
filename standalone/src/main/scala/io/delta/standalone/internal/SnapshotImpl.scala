@@ -40,7 +40,7 @@ import io.delta.standalone.internal.scan.{DeltaScanImpl, FilteredDeltaScanImpl}
 import io.delta.standalone.internal.util.{ConversionUtils, FileNames, JsonUtils}
 
 /**
- * Contains the protocol, metadata, and corresponding table version. The protocol and metadata
+ * Contains the non-file actions and corresponding table version. The non file actions
  * will be used as the defaults in the Snapshot if no newer values are found in logs > `version`.
  */
 case class NonFileActionsHint(
@@ -55,7 +55,7 @@ case class NonFileActionsHint(
  * Will contain various metrics collected while finding/loading the latest protocol and metadata
  * for this Snapshot. This can be used to verify that the minimal log replay occurred.
  */
-case class ProtocolMetadataLoadMetrics(fileVersions: Seq[Long])
+case class NonFileActionLoadMetrics(fileVersions: Seq[Long])
 
 /**
  * Scala implementation of Java interface [[Snapshot]].
@@ -165,10 +165,10 @@ private[internal] class SnapshotImpl(
     loadNonFileActions()
 
   private def loadNonFileActions():
-    (Protocol, Metadata, Seq[SetTransaction], ProtocolMetadataLoadMetrics) = {
+    (Protocol, Metadata, Seq[SetTransaction], NonFileActionLoadMetrics) = {
 
     val fileVersionsScanned = scala.collection.mutable.Set[Long]()
-    def createMetrics = ProtocolMetadataLoadMetrics(fileVersionsScanned.toSeq.sorted.reverse)
+    def createMetrics = NonFileActionLoadMetrics(fileVersionsScanned.toSeq.sorted.reverse)
 
     var protocol: Protocol = null
     var metadata: Metadata = null
@@ -411,8 +411,8 @@ private class InitialSnapshotImpl(
 
   override lazy val setTransactionsScala: Seq[SetTransaction] = Nil
 
-  override lazy val protocolMetadataLoadMetrics: ProtocolMetadataLoadMetrics =
-    ProtocolMetadataLoadMetrics(Seq.empty)
+  override lazy val protocolMetadataLoadMetrics: NonFileActionLoadMetrics =
+    NonFileActionLoadMetrics(Seq.empty)
 
   override def scan(): DeltaScan = new DeltaScanImpl(memoryOptimizedLogReplay)
 

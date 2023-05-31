@@ -691,7 +691,7 @@ abstract class DeltaLogSuiteBase extends FunSuite {
    *         snapshot
    */
   test("snapshot should read the minimal number of log files needed when loading " +
-    "protocol & metadata") {
+    "non file actions") {
     withTempDir { dir =>
       val conf = new Configuration()
       def commit(i: Int, deltaLog: DeltaLog): Unit = {
